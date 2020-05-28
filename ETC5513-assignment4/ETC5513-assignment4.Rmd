@@ -1,0 +1,88 @@
+---
+title: "ETC5513-Assignment4"
+author:
+- familyname: 
+  othernames: 
+  address: Monash University
+  email: 
+  correspondingauthor: true
+  qualifications:
+- familyname: 
+  othernames: 
+  address: Monash University
+  email: 
+  correspondingauthor: true
+  qualifications:
+- familyname: 
+  othernames: 
+  address: Monash University
+  email: 
+  correspondingauthor: true
+  qualifications:
+- familyname: 
+  othernames: 
+  address: Monash University
+  email: 
+  correspondingauthor: true
+  qualifications:
+department: Department of\newline Econometrics &\newline Business Statistics
+organization: Acme Corporation
+bibliography: references.bib
+biblio-style: authoryear-comp
+linestretch: 1.5
+output:
+  MonashEBSTemplates::report:
+    fig_caption: yes
+    fig_height: 5
+    fig_width: 8
+    includes:
+      in_header: preamble.tex
+    keep_tex: yes
+    number_sections: yes
+    citation_package: biblatex
+    toc: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, cache=TRUE, messages=FALSE, warning=FALSE, fig.pos = 'H')
+
+library(tidyverse)
+library(ggplot2)
+library(kableExtra)
+library(here)
+```
+
+
+```{r readingdata, message = FALSE, warning = FALSE}
+expectancy <- read_csv(here::here("data", "life_expectancy.csv"))
+names(expectancy) <- paste(names(expectancy), expectancy[1, ], sep = "_") ## Merging first two header rows together to get row names
+expectancy <- expectancy[-1,] ## Removing now unnecessary firt row
+
+spend <- read_csv(here::here("data", "health_expenditure.csv"), skip = 1)
+
+gdp <- read_csv(here::here("data", "gdp_data.csv"), skip = 3)
+
+head(expectancy,10)
+head(spend, 10)
+head(gdp, 10)
+```
+
+ 
+\section*{Introduction}
+
+
+
+\section*{Differences between men and women}
+
+
+
+\section*{Differences betweetn countries}
+
+
+
+\section*{Life expectancy at birth vs at 60}
+
+
+
+\section*{Life expectancy and Gross Domestic Product}
+
