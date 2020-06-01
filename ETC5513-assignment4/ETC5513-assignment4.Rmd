@@ -73,6 +73,17 @@ head(gdp, 10)
 
 
 \section*{Differences between men and women}
+```{r transform}
+expectancy_clean <- expectancy %>%
+  pivot_longer(cols = `Life expectancy at birth (years)_Both sexes`:`Healthy life expectancy (HALE) at age 60 (years)_2_Female`,
+               names_to = c("Type", "Gender"),
+               names_sep = "_",
+               values_to = "Expectancy") %>%
+  mutate(Gender = if_else(Gender == "1", "Male",
+                          if_else(Gender == 2, "Female", "Both"))) %>%
+  rename(Country = X1_Country,
+         Year = X2_Year)
+```
 
 
 
