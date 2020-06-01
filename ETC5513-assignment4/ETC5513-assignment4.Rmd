@@ -86,3 +86,8 @@ head(gdp, 10)
 
 \section*{Life expectancy and Gross Domestic Product}
 Life expectancy and GDP in USA
+- What to do?
+Is there any relation between life span and GDP? Very hard to say, it is basically chicken and egg. Students with better health will study faster as they can stay at school more. Likewise, healthier person save more and thus contribute more to the economy. (They can work harder, longer and focus more on the task) (6 - https://en.wikipedia.org/wiki/Preston_curve)
+Therefore, I will only create the graph, inspired by [this link](https://vimeo.com/113449763)
+What is in in:
+geom_point x = lifespan, y = Income, color = continent, size = population) 
