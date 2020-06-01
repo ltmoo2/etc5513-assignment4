@@ -82,9 +82,26 @@ expectancy_clean <- expectancy %>%
   mutate(Gender = if_else(Gender == "1", "Male",
                           if_else(Gender == 2, "Female", "Both"))) %>%
   rename(Country = X1_Country,
-         Year = X2_Year)
+         Year = X2_Year) %>%
+  mutate(Expectancy = as.numeric(Expectancy)) %>%
+  mutate(Year = as.numeric(Year))
+
+expectancy_clean %>%
+  head(10) %>%
+  kable(caption = "Life expectancy data") %>%
+  kable_styling(bootstrap_options = c("striped", "bordered"))
 ```
 
+```{r test}
+expectancy_clean %>%
+  filter(Country == "Australia") %>%
+  filter(str_detect(Type, "Life expectancy at birth")) %>%
+  ggplot(aes(x = Year,
+             y = Expectancy,
+             group = Gender,
+             colour = Gender))+
+  geom_line() 
+```
 
 
 \section*{Differences betweetn countries}
