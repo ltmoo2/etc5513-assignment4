@@ -67,7 +67,22 @@ head(spend, 10)
 head(gdp, 10)
 ```
 
- 
+```{r}
+expectancy_clean <- expectancy %>%
+  pivot_longer(cols = `Life expectancy at birth (years)_Both sexes`:`Healthy life expectancy (HALE) at age 60 (years)_2_Female`,
+               names_to = c("Type", "Gender"),
+               names_sep = "_",
+               values_to = "Expectancy") %>%
+  mutate(Gender = if_else(Gender == "1", "Male",
+                          if_else(Gender == 2, "Female", "Both"))) %>%
+  rename(Country = X1_Country,
+         Year = X2_Year) %>%
+  mutate(Expectancy = as.numeric(Expectancy)) %>%
+  mutate(Year = as.numeric(Year))
+```
+
+
+
 \section*{Introduction}
 
 
@@ -76,7 +91,51 @@ head(gdp, 10)
 
 
 
-\section*{Differences betweetn countries}
+\section*{Life expectancy and Health expenditure}
+
+```{r country}
+country_le <- expectancy_clean %>% 
+  filter(Gender == "Both") %>% 
+  pivot_wider(names_from = Type, 
+  values_from = Expectancy)
+
+#examine data
+head(country_le)
+
+```
+
+
+```{r continent}
+# Add continent variable
+country_le_continent <- country_le %>% 
+  mutate(continent = countrycode(sourcevar = country_le$Country, 
+                                            origin = "country.name",
+                                            destination = "continent")) %>% 
+  mutate(Year = as.character(Year))
+  
+```
+
+
+```{r tidy_data}
+# tidy health expenditure data
+health_expenditure <- spend %>% 
+  select(-2) %>%   #remove year2017 to match the life expectancy data
+  pivot_longer(cols = c(2:18), names_to = "Year", 
+               values_to = "Health expenditure per capita(US$)") 
+  
+```
+
+```{r le_hs}
+# join life_expectancy and health_expenditure
+life_health_expenditure <- left_join(country_le_continent, 
+                               health_spend, 
+                               by = c("Country" = "Country", 
+                                      "Year" = "Year")) %>% 
+  mutate(Year = as.integer(Year))
+
+```
+
+
 
 
 
