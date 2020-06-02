@@ -159,7 +159,7 @@ both_r <- glance(both_reg) %>%
   select(r.squared, adj.r.squared) %>%
   mutate(Model = "Both")
 
-bind_rows(Gender = tidy(gender_reg),
+reg_comp <- bind_rows(Gender = tidy(gender_reg),
           Year = tidy(exp_reg),
           Both = tidy(both_reg),
           .id = "Model") %>%
@@ -170,13 +170,24 @@ bind_rows(Gender = tidy(gender_reg),
          term, 
          estimate, 
          r.squared, 
-         adj.r.squared) %>%
+         adj.r.squared)
+
+reg_comp %>%
   kable(caption = "Model estimates for life expectancy based on gender and year", digits = 3) %>%
   kable_styling(bootstrap_options = c("striped", "bordered"))
 
 ```
 
 
+```{r modelcomp, fig.cap = "Comparison of model fits"}
+reg_comp %>%
+  ggplot(aes(x = Model,
+             y = adj.r.squared,
+             colour = Model)) +
+  geom_point(size = 3) +
+  ylab("Adjusted r squared") +
+  theme_bw()
+```
 
 
 \section*{Differences betweetn countries}
