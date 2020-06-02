@@ -103,15 +103,23 @@ averages %>%
   kable_styling(bootstrap_options = c("striped", "bordered"))
 ```
 
-
-
-```{r test, fig.cap = "Change in life expectancy by year for each gender"}
+```{r box, "Comparison of life expectancy across genders"}
 yearly_avg <- expectancy_clean %>%
   filter(str_detect(Type, "Life expectancy at birth")) %>%
   group_by(Gender, Year) %>%
   summarise(Average = mean(Expectancy, na.rm = TRUE))
- 
-  
+
+yearly_avg %>%
+  ggplot(aes(x = Gender,
+             y = Average,
+             colour = Gender)) +
+  geom_boxplot() +
+  theme_bw() +
+  ylab("Average life expectancy")
+```
+
+```{r test, fig.cap = "Change in life expectancy by year for each gender"}
+
 yearly_avg %>%
   ggplot(aes(x = Year,
              y = Average,
@@ -122,6 +130,52 @@ yearly_avg %>%
   theme_bw()
 
 ```
+
+```{r linear}
+library(broom)
+
+reg_data <- yearly_avg %>%
+  filter(Gender != "Both") %>%
+  mutate(Year = Year-2000)
+
+gender_reg <- lm(Average ~ Gender,
+   data = reg_data)
+
+exp_reg <-  lm(Average ~ Year,
+   data = reg_data)
+
+both_reg <- lm(Average ~ Gender + Year,
+   data = reg_data)
+
+gender_r <- glance(gender_reg) %>%
+  select(r.squared, adj.r.squared) %>%
+  mutate(Model = "Gender")
+
+year_r <- glance(exp_reg) %>%
+  select(r.squared, adj.r.squared) %>%
+  mutate(Model = "Year")
+
+both_r <- glance(both_reg) %>%
+  select(r.squared, adj.r.squared) %>%
+  mutate(Model = "Both")
+
+bind_rows(Gender = tidy(gender_reg),
+          Year = tidy(exp_reg),
+          Both = tidy(both_reg),
+          .id = "Model") %>%
+              left_join(bind_rows(gender_r, 
+                      year_r, both_r),
+            by = "Model") %>%
+  select(Model,
+         term, 
+         estimate, 
+         r.squared, 
+         adj.r.squared) %>%
+  kable(caption = "Model estimates for life expectancy based on gender and year", digits = 3) %>%
+  kable_styling(bootstrap_options = c("striped", "bordered"))
+
+```
+
 
 
 
