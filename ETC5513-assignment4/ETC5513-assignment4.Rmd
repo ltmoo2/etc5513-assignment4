@@ -92,16 +92,37 @@ expectancy_clean %>%
   kable_styling(bootstrap_options = c("striped", "bordered"))
 ```
 
-```{r test}
-expectancy_clean %>%
-  filter(Country == "Australia") %>%
+```{r average}
+averages <- expectancy_clean %>%
   filter(str_detect(Type, "Life expectancy at birth")) %>%
-  ggplot(aes(x = Year,
-             y = Expectancy,
-             group = Gender,
-             colour = Gender))+
-  geom_line() 
+  group_by(Gender) %>%
+  summarise("Average Life Expectancy" = mean(Expectancy, na.rm = TRUE))
+
+averages %>%
+  kable(caption = "Average life expectancy across genders", digits = 1) %>%
+  kable_styling(bootstrap_options = c("striped", "bordered"))
 ```
+
+
+
+```{r test, fig.cap = "Change in life expectancy by year for each gender"}
+yearly_avg <- expectancy_clean %>%
+  filter(str_detect(Type, "Life expectancy at birth")) %>%
+  group_by(Gender, Year) %>%
+  summarise(Average = mean(Expectancy, na.rm = TRUE))
+ 
+  
+yearly_avg %>%
+  ggplot(aes(x = Year,
+             y = Average,
+             group = Gender,
+             colour = Gender)) +
+  geom_line(size = 1) +
+  ylab("Average Life Expectancy") +
+  theme_bw()
+
+```
+
 
 
 \section*{Differences betweetn countries}
