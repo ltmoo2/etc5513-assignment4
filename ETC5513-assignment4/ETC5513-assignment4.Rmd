@@ -53,6 +53,7 @@ library(here)
 library(ggthemes)
 library(countrycode)
 library(gganimate)
+library(broom)
 library(stargazer)
 
 ```
@@ -182,6 +183,81 @@ ggplot(life_health_expenditure,
 ```
 
 
+```{r}
+life_health_lm <- life_health_expenditure %>% 
+  filter(!is.na(`Health expenditure per capita(US$)`)) %>% 
+  filter(!is.na(`Healthy life expectancy (HALE) at birth (years)`)) %>% 
+  filter(!is.na(`Healthy life expectancy (HALE) at age 60 (years)`)) %>% 
+  select(-c(4:5))
+  
+```
+
+```{r}
+lm_birth <- lm (`Healthy life expectancy (HALE) at birth (years)` ~ `Health expenditure per capita(US$)`, life_health_lm)
+
+```
+
+
+```{r}
+tidy(lm_birth)
+```
+
+```{r}
+glance(lm_birth)
+```
+
+```{r}
+birth_aug <- augment(lm_birth, life_health_lm)
+
+```
+
+
+```{r}
+ggplot(birth_aug, 
+       aes(x = `Health.expenditure.per.capita.US..`, 
+           y = .fitted)) + 
+  #geom_line(colour = "blue") + 
+  geom_point(aes(x = `Health.expenditure.per.capita.US..`,
+                 y = `Healthy.life.expectancy..HALE..at.birth..years.`))+
+  geom_smooth(method = "lm")+
+  scale_x_log10() +
+  scale_y_log10() 
+
+```
+
+
+
+```{r}
+lm_age60 <- lm (`Healthy life expectancy (HALE) at age 60 (years)` ~ `Health expenditure per capita(US$)`, life_health_lm)
+
+```
+
+```{r}
+tidy(lm_age60)
+```
+
+```{r}
+glance(lm_age60)
+```
+
+```{r}
+age60_aug <- augment(lm_age60, life_health_lm)
+
+```
+
+
+```{r}
+ggplot(age60_aug, 
+       aes(x = `Health.expenditure.per.capita.US..`, 
+           y = .fitted)) + 
+  #geom_line(colour = "blue") + 
+  geom_point(aes(x = `Health.expenditure.per.capita.US..`,
+                 y = `Healthy.life.expectancy..HALE..at.age.60..years.`))+
+  geom_smooth(method = "lm")+
+  scale_x_log10() +
+  scale_y_log10() 
+
+```
 
 
 \section*{Life expectancy at birth vs at 60}
