@@ -1,12 +1,12 @@
 ---
 title: "ETC5513-Assignment4"
 author:
-- familyname: 
-  othernames: 
+- familyname: Moody
+  othernames: Lachlan
   address: Monash University
-  email: 
+  email: ltmoo2@student.monash.edu.au
   correspondingauthor: true
-  qualifications:
+  qualifications: Student:27809951
 - familyname: 
   othernames: 
   address: Monash University
@@ -73,6 +73,11 @@ head(gdp, 10)
 
 
 \section*{Differences between men and women}
+
+The disparity in the life expectancy between men and women was first recognised in the 1920's [@luy2014gender]. This section will examine this difference in detail.
+
+The first step was to tidy the life expectancy data into a format R. The original variables were condensed into Country, Year, Type (expectancy measure), Gender and Expectancy. The first 10 resulting rows are displayed in Table \@ref(tab:transform). 
+
 ```{r transform}
 expectancy_clean <- expectancy %>%
   pivot_longer(cols = `Life expectancy at birth (years)_Both sexes`:`Healthy life expectancy (HALE) at age 60 (years)_2_Female`,
@@ -92,6 +97,8 @@ expectancy_clean %>%
   kable_styling(bootstrap_options = c("striped", "bordered"))
 ```
 
+An average was then calculated across the recorded gender types for life expectancy at birth which is shown in Table \@ref(tab:average). It appears that the average life expectancy for both genders is slightly over 69 years with females having the higher value of 71.6 years and males almost 5 years lower at 66.9 years.
+
 ```{r average}
 averages <- expectancy_clean %>%
   filter(str_detect(Type, "Life expectancy at birth")) %>%
@@ -103,7 +110,10 @@ averages %>%
   kable_styling(bootstrap_options = c("striped", "bordered"))
 ```
 
-```{r box, "Comparison of life expectancy across genders"}
+The yearly averages were then visualised using the boxplot below in Figure \@ref(fig:box) with gender on the x-axis and the average life expectancy on the y-axis. This further illustrates that females on average have a higher life expectancy across all years in the data set, having a higher median and interquartile range than men with only the male maximum and female minimum values overlapping.
+
+```{r box, fig.cap = "Comparison of life expectancy across genders per year"}
+
 yearly_avg <- expectancy_clean %>%
   filter(str_detect(Type, "Life expectancy at birth")) %>%
   group_by(Gender, Year) %>%
@@ -118,6 +128,8 @@ yearly_avg %>%
   ylab("Average life expectancy")
 ```
 
+A line graph was then produced with year on the x-axis and the average life expectancy on the y-axis to illustrate this trend. As can be seen in Figure \@ref(fig:test), across all years recorded in the data set, females have had a higher life expectancy than males by approximately the same amount.
+
 ```{r test, fig.cap = "Change in life expectancy by year for each gender"}
 
 yearly_avg %>%
@@ -130,6 +142,8 @@ yearly_avg %>%
   theme_bw()
 
 ```
+
+A linear model was then produced to see if this trend was due to gender or year. The outputs are shown in Table \@ref(tab:linear). 
 
 ```{r linear}
 library(broom)
@@ -178,6 +192,7 @@ reg_comp %>%
 
 ```
 
+Several insights are provided from this table. Firstly, the GenderMale term for the Gender model suggests that males on average live 4.7 years less than the female average of 71.6. Secondly, the Year term for the Year model shows that for each after 2000, people on average are living 0.35 years longer. Finally the adjusted.r.squared values describes the explanatory power of these models. The results have been plotted in Figure \@ref(fig:modelcomp) with the model name on the x-axis and the adjusted r squared on the y-axis.
 
 ```{r modelcomp, fig.cap = "Comparison of model fits"}
 reg_comp %>%
@@ -189,6 +204,7 @@ reg_comp %>%
   theme_bw()
 ```
 
+This shows that the gender model is superior to the year mode, explaining over 64% of the variation in the life expectancy value compared to under 33% for the year variable. Interestingly, almost the entire variation in life expectancy can be explained by including both variables.
 
 \section*{Differences betweetn countries}
 
