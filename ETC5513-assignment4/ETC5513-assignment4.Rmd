@@ -50,6 +50,11 @@ library(tidyverse)
 library(ggplot2)
 library(kableExtra)
 library(here)
+library(ggthemes)
+library(countrycode)
+library(gganimate)
+library(stargazer)
+
 ```
 
 
@@ -93,7 +98,7 @@ expectancy_clean <- expectancy %>%
 
 \section*{Life expectancy and Health expenditure}
 
-```{r country}
+```{r country, include=FALSE}
 country_le <- expectancy_clean %>% 
   filter(Gender == "Both") %>% 
   pivot_wider(names_from = Type, 
@@ -128,13 +133,53 @@ health_expenditure <- spend %>%
 ```{r le_hs}
 # join life_expectancy and health_expenditure
 life_health_expenditure <- left_join(country_le_continent, 
-                               health_spend, 
+                               health_expenditure, 
                                by = c("Country" = "Country", 
                                       "Year" = "Year")) %>% 
-  mutate(Year = as.integer(Year))
+  mutate(Year = as.integer(Year),
+         `Health expenditure per capita(US$)` = as.numeric(`Health expenditure per capita(US$)`),
+         `Life expectancy at birth (years)` = as.numeric(`Life expectancy at birth (years)`),
+         `Life expectancy at age 60 (years)` = as.numeric(`Life expectancy at age 60 (years)`))
 
 ```
 
+
+```{r birth, message=FALSE}
+ggplot(life_health_expenditure, 
+            aes(`Health expenditure per capita(US$)`, 
+                `Life expectancy at birth (years)`, 
+                size = `Life expectancy at birth (years)`,
+                colour = continent)) +
+  geom_point(alpha = 0.6,na.rm = TRUE) +
+  scale_color_brewer(palette = "Set2")+
+  scale_size(range = c(1, 4)) +
+  transition_time(Year) +
+  labs(title = 'Year: {frame_time}', 
+       x = "Health expenditure per capita(US$)", 
+       y = "Life expectancy at birth") +
+  ease_aes()+
+  theme_bw()
+
+```
+
+
+```{r age60, message=FALSE}
+ggplot(life_health_expenditure, 
+            aes(`Health expenditure per capita(US$)` , 
+                `Life expectancy at age 60 (years)`, 
+                size = `Life expectancy at birth (years)`,
+                colour = continent)) +
+  geom_point(alpha = 0.6,na.rm = TRUE) +
+  scale_color_brewer(palette = "Set2")+
+  scale_size(range = c(1, 4)) +
+  transition_time(Year) +
+  labs(title = 'Year: {frame_time}', 
+       x = "Health expenditure per capita(US$)", 
+       y = "Life expectancy at age 60") +
+  ease_aes()+
+  theme_bw()
+
+```
 
 
 
