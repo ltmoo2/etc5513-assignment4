@@ -182,6 +182,50 @@ ggplot(life_health_expenditure,
 ```
 
 
+
+```{r map_world}
+#read world map
+map_world <- map_data("world")
+
+```
+
+```{r avg_he}
+# compute average health expenditure per capita
+avg_health_expenditure <- life_health_expenditure %>% 
+  filter(!is.na(`Health expenditure per capita(US$)`)) %>% 
+  group_by(Country) %>% 
+  summarise(average = mean(`Health expenditure per capita(US$)`))
+  
+```
+
+
+```{r map_he}
+#join map_world and health expenditure data
+map_health_expenditure <- 
+  left_join(avg_health_expenditure, map_world, by = c("Country" = "region")) 
+
+```
+
+
+```{r map_avg}
+# map average health expenditure
+ggplot(map_health_expenditure,
+       aes(x = long, 
+           y = lat, 
+           group = group, 
+           fill = average)
+       ) +
+  
+  geom_polygon(color = "#CCCCCC") + 
+  scale_fill_gradient(name = "Health expenditure per capita(US$)",
+                      low="white", 
+                      high="steelblue"
+                      )+
+  theme_map()
+  
+```
+
+
 ```{r lm_data}
 # tidy and make lm data
 life_health_lm_data <- life_health_expenditure %>% 
@@ -218,9 +262,8 @@ hale_birth_aug <- augment(lm_birth, life_health_lm_data)
 
 ```
 
-
-
 ```{r plot_birth}
+# plot HALE at birth and health expenditure
 ggplot(hale_birth_aug, 
        aes(x = `Health.expenditure.per.capita.US..`, 
            y = .fitted)) + 
@@ -237,8 +280,8 @@ ggplotly()
 ```
 
 
-
 ```{r age60_model}
+# model: HALE at age60 and health expenditure
 lm_age60 <- lm (`Healthy life expectancy (HALE) at age 60 (years)` ~ `Health expenditure per capita(US$)`, life_health_lm_data)
 
 ```
@@ -256,8 +299,8 @@ hale_age60_aug <- augment(lm_age60, life_health_lm_data)
 
 ```
 
-
 ```{r plot_age60}
+# plot HALE at age60 and health expenditure
 ggplot(hale_age60_aug, 
        aes(x = `Health.expenditure.per.capita.US..`, 
            y = .fitted)) + 
