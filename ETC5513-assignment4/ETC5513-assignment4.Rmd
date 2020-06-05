@@ -54,6 +54,7 @@ library(ggthemes)
 library(countrycode)
 library(gganimate)
 library(broom)
+library(knitr)
 
 ```
 
@@ -143,28 +144,37 @@ life_health_expenditure <- left_join(country_le_continent,
 
 ```
 
+## Dynamic plots for Life expectancy and Health expenditure
 
-```{r birth, message=FALSE}
-ggplot(life_health_expenditure, 
+```{r birth, message=FALSE, fig.cap="The plot for Life expectancy and Health expenditure by year", fig.align="center"}
+# plot Health expenditure and Life expectancy at birth 
+plot1 <- ggplot(life_health_expenditure, 
             aes(`Health expenditure per capita(US$)`, 
                 `Life expectancy at birth (years)`, 
                 size = `Life expectancy at birth (years)`,
                 colour = continent)) +
-  geom_point(alpha = 0.6,na.rm = TRUE) +
+  geom_point(alpha = 0.6, 
+             na.rm = TRUE) +
   scale_color_brewer(palette = "Set2")+
   scale_size(range = c(1, 4)) +
   transition_time(Year) +
+  #scale_x_continuous(limits = c(0,10000), breaks = 1000)+
   labs(title = 'Year: {frame_time}', 
        x = "Health expenditure per capita(US$)", 
-       y = "Life expectancy at birth") +
+       y = "Life expectancy at birth(years)") +
   ease_aes()+
   theme_bw()
 
+plot1
 ```
+
+From Figure \@ref(fig:birth), we can learn that 
+
 
 
 ```{r age60, message=FALSE}
-ggplot(life_health_expenditure, 
+# plot Health expenditure and Life expectancy at age60
+plot2 <- ggplot(life_health_expenditure, 
             aes(`Health expenditure per capita(US$)` , 
                 `Life expectancy at age 60 (years)`, 
                 size = `Life expectancy at birth (years)`,
@@ -179,8 +189,50 @@ ggplot(life_health_expenditure,
   ease_aes()+
   theme_bw()
 
+plot2
 ```
 
+
+Figure (\@ref(fig:birth), \@ref(fig:age60)) shows the dynamic relationship between life expectancy at birth(at age 60) and health expenditure from 2000 to 2016. We find that the countries with the lowest life expectancy and health expenditure are mainly in Africa, while Europe, Oceania and some countries in the Americas are far ahead. Life expectancy in most Asian and American countries is concentrated between 65 and 75 years. Also, almost all countries have increased their spending on health over time and improved life expectancy over time.  
+However, there was one country in the Americas showed a significant drop in life expectancy in 2010. Combined with Table \@ref(tab:min_expectancy), we can find that this country is Haiti, which was hit by a large-scale earthquake in 2010 and killed over 230,000 people[@bilham2010lessons]. And it led to a significant drop in life expectancy in Haiti. Another interesting fact is that the country with the highest health expenditure is not the country with the highest life expectancy. Combine with Table \@ref(tab:min_expectancy), and we can find that the country with the highest life expectancy is in Asia, Japan. Japan has the longest life expectancy in the world mainly because of government regulation and support for health care[@ikeda2011has].
+
+
+```{r min_expectancy}
+# select the lowest life expectancy to explain what happened in 2010 about this country
+Americas_min <- life_health_expenditure %>% 
+  filter(continent == "Americas") %>% 
+  select(-3,-c(6:8)) %>% 
+  slice(which.min(`Life expectancy at birth (years)`)) %>% 
+  
+  kable(caption = "The lowest life expectancy in the Americas") %>% 
+  kable_styling(bootstrap_options = 
+                  c("striped", "condensed"), 
+                  full_width = F, 
+                  position = "center") 
+
+Americas_min
+
+```
+
+
+```{r max_expectancy}
+# select the highest life expectancy
+Asia_max <- life_health_expenditure %>% 
+  filter(continent == "Asia") %>% 
+  select(-3,-c(6:8)) %>% 
+  slice(which.max(`Life expectancy at birth (years)`)) %>% 
+  
+  kable(caption = "The highest life expectancy in the Asia") %>% 
+  kable_styling(bootstrap_options = 
+                  c("striped", "condensed"), 
+                  full_width = F, 
+                  position = "center") 
+
+Asia_max
+
+```
+
+## Map for average health expenditure
 
 
 ```{r map_world}
@@ -194,7 +246,30 @@ map_world <- map_data("world")
 avg_health_expenditure <- life_health_expenditure %>% 
   filter(!is.na(`Health expenditure per capita(US$)`)) %>% 
   group_by(Country) %>% 
-  summarise(average = mean(`Health expenditure per capita(US$)`))
+  summarise(average = mean(`Health expenditure per capita(US$)`)) %>% 
+  # modify countries's name to match map data
+  mutate(Country = recode(Country, 
+    "United States of America" = "USA",
+    "Antigua and Barbuda" = "Antigua",
+    "Bolivia (Plurinational State of)" = "Bolivia",
+    "Brunei Darussalam" = "Brunei",
+    "Cabo Verde" = "Cape Verde",
+    "Congo" = "Democratic Republic of the Congo",
+    "Iran (Islamic Republic of)" = "Iran",
+    "Lao People's Democratic Republic" = "Laos",
+    "Micronesia (Federated States of)" = "Micronesia",
+    "Republic of Korea" = "South Korea",
+    "Republic of Moldova" = "Moldova",
+    "Republic of North Macedonia" = "Macedonia",
+    "Russian Federation" = "Russia",
+    "Saint Vincent and the Grenadines" = "Saint Vincent",
+    "Syrian Arab Republic" = "Syria",
+    "Trinidad and Tobago" = "Trinidad",
+    "United Kingdom of Great Britain and Northern Ireland" = "UK",
+    "United Republic of Tanzania" = "Tanzania",
+    "Venezuela (Bolivarian Republic of)" = "Venezuela",
+    "Viet Nam" = "Vietnam"
+  ))
   
 ```
 
@@ -207,7 +282,7 @@ map_health_expenditure <-
 ```
 
 
-```{r map_avg}
+```{r map_avg, fig.cap="The average health expenditure per capita(US$) by country", fig.align="center"}
 # map average health expenditure
 ggplot(map_health_expenditure,
        aes(x = long, 
@@ -217,14 +292,20 @@ ggplot(map_health_expenditure,
        ) +
   
   geom_polygon(color = "#CCCCCC") + 
-  scale_fill_gradient(name = "Health expenditure per capita(US$)",
+  scale_fill_gradient(name = "per capita(US$)",
                       low="white", 
-                      high="steelblue"
+                      high="steelblue",
+                      limits = c(0, 10000)
                       )+
+  ggtitle("The average health expenditure per by country")+
   theme_map()
   
 ```
 
+By mapping Figure \@ref(fig:map_avg), it can be found that the highest per capita health expenditure is mainly in European countries, the United States, Canada, Australia, New Zealand and Japan. Some countries are 0 due to miss health expenditure data.
+
+
+## Model for Healthy life expectancy and Health expenditure by continent
 
 ```{r lm_data}
 # tidy and make lm data
@@ -249,20 +330,13 @@ lm_birth <- lm (`Healthy life expectancy (HALE) at birth (years)` ~ `Health expe
 
 ```
 
-```{r tidy_birth_model}
-tidy(lm_birth)
-```
-
-```{r g_birth_model}
-glance(lm_birth)
-```
 
 ```{r aug_birth_model}
 hale_birth_aug <- augment(lm_birth, life_health_lm_data)
 
 ```
 
-```{r plot_birth}
+```{r plot_birth, fig.cap="The plot for Healthy life expectancy at birth(years) and Health expenditure", fig.align="center"}
 # plot HALE at birth and health expenditure
 ggplot(hale_birth_aug, 
        aes(x = `Health.expenditure.per.capita.US..`, 
@@ -275,9 +349,9 @@ ggplot(hale_birth_aug,
   scale_x_log10() +
   facet_wrap(~Year)
 
-ggplotly()
-
 ```
+
+
 
 
 ```{r age60_model}
@@ -286,20 +360,12 @@ lm_age60 <- lm (`Healthy life expectancy (HALE) at age 60 (years)` ~ `Health exp
 
 ```
 
-```{r tidy_age60_model}
-tidy(lm_age60)
-```
-
-```{r g_age60_model}
-glance(lm_age60)
-```
-
 ```{r aug_age60_model}
 hale_age60_aug <- augment(lm_age60, life_health_lm_data)
 
 ```
 
-```{r plot_age60}
+```{r plot_age60, fig.cap="The plot for Healthy life expectancy at age 60(years) and Health expenditure", fig.align="center"}
 # plot HALE at age60 and health expenditure
 ggplot(hale_age60_aug, 
        aes(x = `Health.expenditure.per.capita.US..`, 
@@ -312,9 +378,42 @@ ggplot(hale_age60_aug,
   scale_x_log10() +
   facet_wrap(~Year)
 
-ggplotly()
 
 ```
+
+
+From Figure (\@ref(fig:plot_birth), \@ref(fig:plot_age60)), we can see that Africa is the worst fitting one both in Model(at_birth) and Model(at_age60), while Oceania has the best fitting in both. As shown in Table \@ref(tab:model_info), we infer that the Model(AT_age60) is better than Model(at_birth), because it has the highest r.squared which explains the variance in the model. Model(at_age60) explains 69.11% of the dependent variable. Also, Model(at_age60) has the lowest sigma, which gives it more confidence. Finally, Model(at_age60) has the lowest AIC and BIC, which makes it the best model fit.
+From the above analysis, we can find that the amount of health expenditure per capita has a more significant impact on healthy life expectancy at age 60 than healthy life expectancy at birth. This is because people are more likely to get sick as they get older and need more health care to live longer.
+
+
+```{r model_info}
+bind_rows(
+  `Model(at_birth)` = glance(lm_birth),
+  `Model(at_age60)` = glance(lm_age60),
+  .id = "type") %>% 
+  kable(caption = "Model information") %>% 
+  kable_styling(bootstrap_options = 
+                  c("striped", "condensed"), 
+                  full_width = F, 
+                  position = "center") 
+  
+```
+
+
+
+```{r model_ci}
+bind_rows(
+  `Model(at_birth)` = tidy(lm_birth),
+  `Model(at_age60)`= tidy(lm_age60),
+  .id = "type") %>% 
+  kable(caption = "Confidence interval for model") %>% 
+  kable_styling(bootstrap_options = 
+                  c("striped", "condensed"), 
+                  full_width = F, 
+                  position = "center") 
+  
+```
+
 
 
 
