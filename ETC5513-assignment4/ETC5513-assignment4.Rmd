@@ -54,7 +54,6 @@ library(ggthemes)
 library(countrycode)
 library(gganimate)
 library(broom)
-library(stargazer)
 
 ```
 
@@ -183,81 +182,98 @@ ggplot(life_health_expenditure,
 ```
 
 
-```{r}
-life_health_lm <- life_health_expenditure %>% 
+```{r lm_data}
+# tidy and make lm data
+life_health_lm_data <- life_health_expenditure %>% 
+  select(Year,continent,Country,-Gender,-c(4:5),c(6:7),9) %>% 
   filter(!is.na(`Health expenditure per capita(US$)`)) %>% 
   filter(!is.na(`Healthy life expectancy (HALE) at birth (years)`)) %>% 
   filter(!is.na(`Healthy life expectancy (HALE) at age 60 (years)`)) %>% 
-  select(-c(4:5))
+  pivot_longer(cols = c(4:6), names_to = "Type", values_to = "value") %>% 
+  group_by(Year, Type, continent) %>% 
+    summarize_at(vars(value), 
+               list(Vmean = mean), 
+               na.rm = TRUE) %>% 
+  pivot_wider(values_from = Vmean, names_from = Type)
   
 ```
 
-```{r}
-lm_birth <- lm (`Healthy life expectancy (HALE) at birth (years)` ~ `Health expenditure per capita(US$)`, life_health_lm)
+
+```{r birth_model}
+# model: HALE birth and health expenditure
+lm_birth <- lm (`Healthy life expectancy (HALE) at birth (years)` ~ `Health expenditure per capita(US$)`, life_health_lm_data)
 
 ```
 
-
-```{r}
+```{r tidy_birth_model}
 tidy(lm_birth)
 ```
 
-```{r}
+```{r g_birth_model}
 glance(lm_birth)
 ```
 
-```{r}
-birth_aug <- augment(lm_birth, life_health_lm)
+```{r aug_birth_model}
+hale_birth_aug <- augment(lm_birth, life_health_lm_data)
 
 ```
 
 
-```{r}
-ggplot(birth_aug, 
+
+```{r plot_birth}
+ggplot(hale_birth_aug, 
        aes(x = `Health.expenditure.per.capita.US..`, 
            y = .fitted)) + 
-  #geom_line(colour = "blue") + 
+  geom_line(colour = "blue") + 
   geom_point(aes(x = `Health.expenditure.per.capita.US..`,
-                 y = `Healthy.life.expectancy..HALE..at.birth..years.`))+
-  geom_smooth(method = "lm")+
+                 y = `Healthy.life.expectancy..HALE..at.birth..years.`,
+                 color = continent)) +
+  labs(x = "Health Expenditure(US$)", y = "HALE at birth(years).fitted")+
   scale_x_log10() +
-  scale_y_log10() 
+  facet_wrap(~Year)
+
+ggplotly()
 
 ```
 
 
 
-```{r}
-lm_age60 <- lm (`Healthy life expectancy (HALE) at age 60 (years)` ~ `Health expenditure per capita(US$)`, life_health_lm)
+```{r age60_model}
+lm_age60 <- lm (`Healthy life expectancy (HALE) at age 60 (years)` ~ `Health expenditure per capita(US$)`, life_health_lm_data)
 
 ```
 
-```{r}
+```{r tidy_age60_model}
 tidy(lm_age60)
 ```
 
-```{r}
+```{r g_age60_model}
 glance(lm_age60)
 ```
 
-```{r}
-age60_aug <- augment(lm_age60, life_health_lm)
+```{r aug_age60_model}
+hale_age60_aug <- augment(lm_age60, life_health_lm_data)
 
 ```
 
 
-```{r}
-ggplot(age60_aug, 
+```{r plot_age60}
+ggplot(hale_age60_aug, 
        aes(x = `Health.expenditure.per.capita.US..`, 
            y = .fitted)) + 
-  #geom_line(colour = "blue") + 
+  geom_line(colour = "blue") + 
   geom_point(aes(x = `Health.expenditure.per.capita.US..`,
-                 y = `Healthy.life.expectancy..HALE..at.age.60..years.`))+
-  geom_smooth(method = "lm")+
+                 y = `Healthy.life.expectancy..HALE..at.age.60..years.`,
+                 color = continent)) +
+  labs(x = "Health Expenditure(US$)", y = "HALE at birth(years).fitted")+
   scale_x_log10() +
-  scale_y_log10() 
+  facet_wrap(~Year)
+
+ggplotly()
 
 ```
+
+
 
 
 \section*{Life expectancy at birth vs at 60}
