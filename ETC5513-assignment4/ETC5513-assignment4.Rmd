@@ -81,7 +81,28 @@ head(gdp, 10)
 
 
 \section*{Life expectancy at birth vs at 60}
+<<<<<<< Updated upstream
 asdf
+=======
+```{r}
+library(readr)
+expectancy <- read_csv(here::here("data/life_expectancy.csv"))
+```
+
+```{r transform}
+expectancy %>%
+  pivot_longer(cols = `Life expectancy at birth (years)_Both sexes`:`Healthy life expectancy (HALE) at age 60 (years)_2_Female`,
+               names_to = c("Type", "Gender"),
+               names_sep = "_",
+               values_to = "Expectancy") %>%
+  mutate(Gender = if_else(Gender == "1", "Male",
+                  if_else(Gender == "2", "Female", "Both"))) %>%
+  rename(Country = X1_Country,
+         Year = X2_Year) %>%
+  mutate(Expectancy = as.numeric(Expectancy)) %>%
+  mutate(Year = as.numeric(Year))
+```
+>>>>>>> Stashed changes
 
 
 \section*{Life expectancy and Gross Domestic Product}
