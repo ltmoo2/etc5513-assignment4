@@ -95,32 +95,136 @@ expectancy_clean <- expectancy %>%
   mutate(Expectancy = as.numeric(Expectancy)) %>%
   mutate(Year = as.numeric(Year))
 ```
+FIGURE presents the overall distribution for life expectancy at birth (years) and life expectancy at age 60 (years) from 2000 to 2016. On the x-axis, the types consist of life expectancy at birth (years), which is the left boxplot in the sub-graphs, and life expectancy at age 60 (years), which is the right one. The y-axis provides the scale of life expectancy, measured in years. From 2000 to 2016, there is a slight upward-lifting trend for both types of boxplots, implying that people at birth and at the age of 60 are expected to live longer as years go on.
+
+```{r}
+expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Year %in% c(2000, 2004, 2008, 2012, 2016),
+         Gender == "Both",
+         Type %in% c("Life expectancy at birth (years)", "Life expectancy at age 60 (years)")) %>%
+  ggplot(aes(y = Expectancy,
+             x = Type,
+             color = Year)) +
+  geom_boxplot() +
+  theme(legend.position = "bottom") +
+  facet_wrap(~ Year, nrow = 1)
+```
+
 
 ```{r}
 expectancy_clean %>%
   distinct(Country)
 ```
 
+TABLE lists the average life expectancy at birth by taking into account of all countries where their life expectancy at birth informations are available. Similar to the results of boxplots, the average 
 ```{r}
 le_birth_bs <- expectancy_clean %>%
   na.omit(expectancy_clean) %>%
   filter(Type == "Life expectancy at birth (years)",
          Gender == "Both") %>%
   group_by(Year) %>%
-  summarise(le_birth_both = mean(Expectancy))
+  summarise(`average LE at birth`= mean(Expectancy)) 
+le_birth_bs  
 ```
 
+```{r}
+meet_average_birth <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Type == "Life expectancy at birth (years)",
+         Gender == "Both") %>%
+  group_by(Year) %>%
+  mutate(`meet average` = if_else(
+    condition = Expectancy > (le_birth_bs$`average LE at birth`),
+    true = "met",
+    false = "unmet"
+  )) %>%
+  select(Country, Year, Expectancy, `meet average`) 
+meet_average_birth
+```
+TABLE shows the number of countries that had and had not met the calculated average life expectancy at birth (years) from 2000 to 2016.
+```{r}
+meet_count_birth <- meet_average_birth %>%
+  count(`meet average`)
+meet_count_birth
+```
+
+```{r}
+meet_average_birth %>%
+  filter(`meet average` == "met") %>%
+  group_by(Year) %>%
+  summarise(met_le_birth = mean(Expectancy))
+```
+```{r}
+meet_average_birth %>%
+  filter(`meet average` == "unmet") %>%
+  group_by(Year) %>%
+  summarise(unmet_le_birth = mean(Expectancy))
+```
+TABLE shows the average life expectancy for people at 60 years old. Similar as the life expectancy at birth, these numbers are calculated by taking into all countries where their values for average life expectancy at 60 years old are available. The increasing numbers are also presented, yet the extent of this rising pattern is relatively smaller to that of life expectancy at birth.
 ```{r}
 le_60_bs <- expectancy_clean %>%
   na.omit(expectancy_clean) %>%
   filter(Type == "Life expectancy at age 60 (years)",
          Gender == "Both") %>%
   group_by(Year) %>%
-  summarise(le_60_both = mean(Expectancy))
+  summarise(`average LE at 60` = mean(Expectancy))
+le_60_bs
+```
+```{r}
+avg_yeari <- le_birth_bs %>%
+  left_join(le_60_bs, by = "Year") %>%
+  mutate(`lag average LE at birth` = lag(`average LE at birth`),
+         `Yearly increment at birth` = `average LE at birth` - `lag average LE at birth`,
+         `lag average LE at 60` = lag(`average LE at 60`),
+         `Yearly increment at 60` = `average LE at 60` - `lag average LE at 60`) %>%
+  select(Year, `average LE at birth`, `average LE at 60`, 
+         `Yearly increment at birth`, `Yearly increment at 60`)
+avg_yeari
+```
+```{r}
+avg_yeari %>%
+  pivot_longer(., cols = c(`Yearly increment at birth`, `Yearly increment at 60`),
+               names_to = "LE_Type", values_to = "Increment") %>%
+  ggplot(aes(x = Year, y = Increment, color = LE_Type)) +
+  geom_line() 
+```
+
+```{r}
+meet_average_60 <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Type == "Life expectancy at age 60 (years)",
+         Gender == "Both") %>%
+  group_by(Year) %>%
+  mutate(`meet average` = if_else(
+    condition = Expectancy > (le_60_bs$`average LE at 60`),
+    true = "met",
+    false = "unmet"
+  )) %>%
+  select(Country, Year, Expectancy, `meet average`) 
+meet_average_60
+```
+
+```{r}
+meet_count_60 <- meet_average_60 %>%
+  count(`meet average`) 
+
+meet_count_60
 ```
 
 
-
+```{r}
+meet_average_60 %>%
+  filter(`meet average` == "met") %>%
+  group_by(Year) %>%
+  summarise(met_le_60 = mean(Expectancy))
+```
+```{r}
+meet_average_60 %>%
+  filter(`meet average` == "unmet") %>%
+  group_by(Year) %>%
+  summarise(unmet_le_60 = mean(Expectancy))
+```
 
 
 \section*{Life expectancy and Gross Domestic Product}
