@@ -98,10 +98,30 @@ expectancy_clean <- expectancy %>%
 
 ```{r}
 expectancy_clean %>%
+  distinct(Country)
+```
+
+```{r}
+le_birth_bs <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
   filter(Type == "Life expectancy at birth (years)",
          Gender == "Both") %>%
-  arrange(Year)
+  group_by(Year) %>%
+  summarise(le_birth_both = mean(Expectancy))
 ```
+
+```{r}
+le_60_bs <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Type == "Life expectancy at age 60 (years)",
+         Gender == "Both") %>%
+  group_by(Year) %>%
+  summarise(le_60_both = mean(Expectancy))
+```
+
+
+
+
 
 \section*{Life expectancy and Gross Domestic Product}
 
