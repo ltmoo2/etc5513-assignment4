@@ -168,9 +168,6 @@ plot1 <- ggplot(life_health_expenditure,
 plot1
 ```
 
-From Figure \@ref(fig:birth), we can learn that 
-
-
 
 ```{r age60, message=FALSE}
 # plot Health expenditure and Life expectancy at age60
@@ -390,7 +387,7 @@ $$\large{\hat{LifeExp(at~birth)}=57.52+0.00539Health~expenditure}$$
 And the formula of Model(at_age60) can be represented by:
 $$\large{\hat{LifeExp(at ~age ~60)}=13.20+0.00172Health~expenditure}$$
 
-From the above analysis, it's easily to find the amount of health expenditure per capita has a more significant impact on healthy life expectancy at age 60 than healthy life expectancy at birth. It's possibly because people are more likely to get sick as they get older and need more health care to live longer.  
+From the above analysis, we can learn that the amount of health expenditure per capita has a more significant impact on healthy life expectancy at age 60 than healthy life expectancy at birth. It's possibly because people are more likely to get sick as they get older and need more health care to live longer.  
 
 
 ```{r model_info}
