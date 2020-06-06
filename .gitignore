@@ -4,9 +4,7 @@
 # Ada Library Information
 *.ali
 .Rproj.user
-<<<<<<< Updated upstream
 
 .Rhistory
 *.Rproj
-=======
->>>>>>> Stashed changes
+
