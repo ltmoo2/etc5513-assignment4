@@ -193,8 +193,8 @@ plot2
 ```
 
 
-Figure (\@ref(fig:birth), \@ref(fig:age60)) shows the dynamic relationship between life expectancy at birth(at age 60) and health expenditure from 2000 to 2016. We find that the countries with the lowest life expectancy and health expenditure are mainly in Africa, while Europe, Oceania and some countries in the Americas are far ahead. Life expectancy in most Asian and American countries is concentrated between 65 and 75 years. Also, almost all countries have increased their spending on health over time and improved life expectancy over time.  
-However, there was one country in the Americas showed a significant drop in life expectancy in 2010. Combined with Table \@ref(tab:min_expectancy), we can find that this country is Haiti, which was hit by a large-scale earthquake in 2010 and killed over 230,000 people[@bilham2010lessons]. And it led to a significant drop in life expectancy in Haiti. Another interesting fact is that the country with the highest health expenditure is not the country with the highest life expectancy. Combine with Table \@ref(tab:min_expectancy), and we can find that the country with the highest life expectancy is in Asia, Japan. Japan has the longest life expectancy in the world mainly because of government regulation and support for health care[@ikeda2011has].
+Figure (\@ref(fig:birth), \@ref(fig:age60)) shows the dynamic relationship between life expectancy at birth(at age 60) and health expenditure from 2000 to 2016. And we find that the countries with the lowest life expectancy and health expenditure are mainly in Africa, while Europe, Oceania and some countries in the Americas are far ahead. Life expectancy in most Asian and American countries is concentrated between 65 and 75 years. Also, almost all countries have increased their spending on health over time and improved life expectancy over time.  
+However, there was an outlier country in the Americas showed a significant drop in life expectancy in 2010. Combined with Table \@ref(tab:min_expectancy), we can find that this country is Haiti, which was hit by a large-scale earthquake in 2010 and killed over 230,000 people[@bilham2010lessons], which led to a significant drop in life expectancy in Haiti. Another interesting fact is that the country with the highest health expenditure is not the country with the highest life expectancy. Combine with Table \@ref(tab:min_expectancy), and we can find that the country with the highest life expectancy is in Asia, Japan. Japan has the longest life expectancy in the world mainly because of its government regulation and support for health care[@ikeda2011has].
 
 
 ```{r min_expectancy}
@@ -302,7 +302,7 @@ ggplot(map_health_expenditure,
   
 ```
 
-By mapping Figure \@ref(fig:map_avg), it can be found that the highest per capita health expenditure is mainly in European countries, the United States, Canada, Australia, New Zealand and Japan. Some countries are 0 due to miss health expenditure data.
+By mapping Figure \@ref(fig:map_avg), it can be found that the highest per capita health expenditure is mainly in European countries, the United States, Canada, Australia, New Zealand and Japan. Some countries are 0 due to missing health expenditure data.
 
 
 ## Model for Healthy life expectancy and Health expenditure by continent
@@ -374,7 +374,7 @@ ggplot(hale_age60_aug,
   geom_point(aes(x = `Health.expenditure.per.capita.US..`,
                  y = `Healthy.life.expectancy..HALE..at.age.60..years.`,
                  color = continent)) +
-  labs(x = "Health Expenditure(US$)", y = "HALE at birth(years).fitted")+
+  labs(x = "Health Expenditure(US$)", y = "HALE at age 60 (years).fitted")+
   scale_x_log10() +
   facet_wrap(~Year)
 
@@ -382,8 +382,15 @@ ggplot(hale_age60_aug,
 ```
 
 
-From Figure (\@ref(fig:plot_birth), \@ref(fig:plot_age60)), we can see that Africa is the worst fitting one both in Model(at_birth) and Model(at_age60), while Oceania has the best fitting in both. As shown in Table \@ref(tab:model_info), we infer that the Model(AT_age60) is better than Model(at_birth), because it has the highest r.squared which explains the variance in the model. Model(at_age60) explains 69.11% of the dependent variable. Also, Model(at_age60) has the lowest sigma, which gives it more confidence. Finally, Model(at_age60) has the lowest AIC and BIC, which makes it the best model fit.
-From the above analysis, we can find that the amount of health expenditure per capita has a more significant impact on healthy life expectancy at age 60 than healthy life expectancy at birth. This is because people are more likely to get sick as they get older and need more health care to live longer.
+From Figure (\@ref(fig:plot_birth), \@ref(fig:plot_age60)), we can see that Africa is the worst fitting one both in Model(at_birth) and Model(at_age60), while Oceania has better fitting in both. As shown in Table \@ref(tab:model_info), we infer that the Model(AT_age60) is better than Model(at_birth), because it has the higher r.squared which explains the variance in the model. Model(at_age60) explains 69.11% of the dependent variable. Also, Model(at_age60) has the lower sigma, which gives it more confidence. Finally, Model(at_age60) has the lower AIC and BIC, which makes it the best model fit[@kenny2015measuring].  
+
+Through Table \@ref(tab:model_ci), we can get the formula of Model(at_birth) as follows:
+$$\large{\hat{LifeExp(at~birth)}=57.52+0.00539Health~expenditure}$$
+
+And the formula of Model(at_age60) can be represented by:
+$$\large{\hat{LifeExp(at ~age ~60)}=13.20+0.00172Health~expenditure}$$
+
+From the above analysis, it's easily to find the amount of health expenditure per capita has a more significant impact on healthy life expectancy at age 60 than healthy life expectancy at birth. It's possibly because people are more likely to get sick as they get older and need more health care to live longer.  
 
 
 ```{r model_info}
