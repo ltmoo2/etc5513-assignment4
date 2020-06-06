@@ -553,6 +553,168 @@ bind_rows(
 
 
 \section*{Life expectancy at birth vs at 60}
+Life expectancy is a measure of population longevity which indicates how long a person is expected to live (@tosato2007aging). It can be measured with different levels, @rabbi2013imbalance raises the point that life expectancy at birth would be higher than at any particular age. In this section, life expectancy at birth and at the age of 60 are examined to depict the changes within these indicators across the world from 2000 to 2016. 
+```{r tranform}
+expectancy_clean <- expectancy %>%
+  pivot_longer(cols = `Life expectancy at birth (years)_Both sexes`:`Healthy life expectancy (HALE) at age 60 (years)_2_Female`,
+               names_to = c("Type", "Gender"),
+               names_sep = "_",
+               values_to = "Expectancy") %>%
+  mutate(Gender = if_else(Gender == "1", "Male",
+                  if_else(Gender == "2", "Female", "Both"))) %>%
+  rename(Country = X1_Country,
+         Year = X2_Year) %>%
+  mutate(Expectancy = as.numeric(Expectancy)) %>%
+  mutate(Year = as.numeric(Year))
+```
+Figure \@ref(fig:3box) presents the overall distribution for life expectancy at birth (years) and life expectancy at age 60 (years) from 2000 to 2016. On the x-axis, Types consist of life expectancy at birth (years), which is positioned as the left boxplot in each sub-graph, and life expectancy at age 60 (years), being the one on the right. The y-axis provides the scale of life expectancy, measured in years. From 2000 to 2016, there is a slight upward-lifting trend for both types of boxplots, implying that people at birth and at the age of 60 are expected to live longer with the progress in time.
+
+```{r 3box, fig.cap="Life expectancy at birth (years) and at age 60 (years) boxplot in 2000, 2004,2008, 2012, 2016"}
+box <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Year %in% c(2000, 2004, 2008, 2012, 2016),
+         Gender == "Both",
+         Type %in% c("Life expectancy at birth (years)", "Life expectancy at age 60 (years)")) %>%
+  ggplot(aes(y = Expectancy,
+             x = Type,
+             color = Year)) +
+  geom_boxplot() +
+  theme(legend.position = "bottom") +
+  facet_wrap(~ Year, nrow = 1)
+box
+```
+
+
+```{r,include=FALSE}
+expectancy_clean %>%
+  distinct(Country)
+```
+
+
+```{r, message=FALSE}
+le_birth_bs <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Type == "Life expectancy at birth (years)",
+         Gender == "Both") %>%
+  group_by(Year) %>%
+  summarise(`average LE at birth`= mean(Expectancy)) 
+```
+
+```{r}
+meet_average_birth <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Type == "Life expectancy at birth (years)",
+         Gender == "Both") %>%
+  group_by(Year) %>%
+  mutate(`meet average` = if_else(
+    condition = Expectancy > (le_birth_bs$`average LE at birth`),
+    true = "met",
+    false = "unmet"
+  )) %>%
+  select(Country, Year, Expectancy, `meet average`) 
+
+```
+
+```{r}
+meet_count_birth <- meet_average_birth %>%
+  count(`meet average`) %>%
+  rename(number_countries_birth = n) %>%
+  rename(meet_avg_birth = `meet average`)
+```
+
+
+```{r, message=FALSE}
+le_60_bs <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Type == "Life expectancy at age 60 (years)",
+         Gender == "Both") %>%
+  group_by(Year) %>%
+  summarise(`average LE at 60` = mean(Expectancy))
+```
+Table \@ref(tab:3avg_yeari) lists the average life expectancy at birth and at 60, taking into account of all countries where their life expectancy informations are available. Yearly increments at birth and at 60 represent the increasing proportion of the average each year comparing with the average of the former year. Similar to the results of boxplots, the averages had continued increasing since 2001. However, the extent of the rising pattern for average life expectancy at 60 is relatively insignificant to that at birth.
+```{r}
+avg_yeari <- le_birth_bs %>%
+  left_join(le_60_bs, by = "Year") %>%
+  mutate(`lag average LE at birth` = lag(`average LE at birth`),
+         `Yearly increment at birth` = `average LE at birth` - `lag average LE at birth`,
+         `lag average LE at 60` = lag(`average LE at 60`),
+         `Yearly increment at 60` = `average LE at 60` - `lag average LE at 60`) %>%
+  select(Year, `average LE at birth`, `average LE at 60`, 
+         `Yearly increment at birth`, `Yearly increment at 60`) 
+```
+
+```{r 3avg_yeari}
+avg_yeari %>%
+  kable(caption = "Average life expectancy at birth, at age 60 (years) and their yearly increment")
+```
+Figure \@ref(fig:3avg_yeari_gr) exhibits the yearly improvements in average life expectancy both at birth and at 60 from 2000 to 2016. The increment for life expectancy at 60 was lower than that at birth for all times from 2000 to 2016. Nevertheless, the patterns for both of them are similar. For example, their increments in 2016 nearly drop to zero. On the next year, they both increase to the maximum increment from 2000 to 2016, as shown as the peaks. 
+```{r 3avg_yeari_gr, fig.cap="Yearly increment of average life expectancy at birth and at age 60 (years)"}
+avg_yeari_gr <- avg_yeari %>%
+  pivot_longer(., cols = c(`Yearly increment at birth`, `Yearly increment at 60`),
+               names_to = "LE_Type", values_to = "Increment") %>%
+  ggplot(aes(x = Year, y = Increment, color = LE_Type)) +
+  geom_point() +
+  geom_line() 
+avg_yeari_gr
+```
+
+```{r}
+meet_average_60 <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Type == "Life expectancy at age 60 (years)",
+         Gender == "Both") %>%
+  group_by(Year) %>%
+  mutate(`meet average` = if_else(
+    condition = Expectancy > (le_60_bs$`average LE at 60`),
+    true = "met",
+    false = "unmet"
+  )) %>%
+  select(Country, Year, Expectancy, `meet average`) 
+```
+
+```{r}
+meet_count_60 <- meet_average_60 %>%
+  count(`meet average`) %>%
+  rename(number_countries_60 = n) %>%
+  rename(meet_avg_60 = `meet average`)
+```
+Table \@ref(tab:3count_birth_60) contains the number of countries which had and had not met the average life expectancy from 2000 to 2016.
+```{r, message=FALSE}
+count_birth_60 <- cbind(meet_count_birth, meet_count_60) %>%
+  select(-Year...4, -meet_avg_60) %>%
+  rename(Year = Year...1, meet_avg = meet_avg_birth) 
+  
+```
+
+```{r 3count_birth_60}
+count_birth_60 %>%
+kable(caption = "Number of countries met and unmet average life expectancy at birth, at age 60 (years) each year")
+```
+
+```{r}
+count_met_graph <- count_birth_60 %>%
+  filter(meet_avg == "met") %>%
+  pivot_longer(., cols = c(number_countries_birth, number_countries_60),
+               names_to = "LE_count_type", values_to = "number_met_countries") %>%
+  ggplot(aes(x = Year, y = number_met_countries, color = LE_count_type)) +
+  geom_point() +
+  geom_line() 
+```
+
+```{r}
+count_unmet_graph <- count_birth_60 %>%
+  filter(meet_avg == "unmet") %>%
+  pivot_longer(., cols = c(number_countries_birth, number_countries_60),
+               names_to = "LE_count_type", values_to = "number_unmet_countries") %>%
+  ggplot(aes(x = Year, y = number_unmet_countries, color = LE_count_type)) +
+  geom_point() +
+  geom_line() 
+```
+Figure \@ref(fig:3combine_count) combines the number of countries that had met the average life expectancy at birth, at 60 and number of countries that had not met the averages from 2000 to 2016. As years pass on, more countries had been meeting and exceeding the average life expectancy at birth and at 60 each year. However, a pheonomenon is revealed here - Although the number of countries meeting average life expectancy at 60 is lower than that at birth, the number of countries which did not meet the average is much higher. Further, since 2001, the number of countries meeting average life expectancy at birth had already surpassed that of not meeting. Yet for life expectancy at 60, it was until 2013, the number of countries meeting the average life expectancy at 60 began to exceed that of unmet number of countries.
+```{r 3combine_count, fig.cap="Trend of number of countries meeting and not meeting each year average LE at birth and 60", warning=FALSE}
+library(gridExtra)
+combine_count <- grid.arrange(count_met_graph, count_unmet_graph)
+```
 
 
 
