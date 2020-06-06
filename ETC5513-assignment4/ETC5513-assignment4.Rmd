@@ -159,7 +159,7 @@ le_60_bs <- expectancy_clean %>%
   group_by(Year) %>%
   summarise(`average LE at 60` = mean(Expectancy))
 ```
-TABLE lists the average life expectancy at birth and at 60, taking into account of all countries where their life expectancy informations are available. Yearly increments at birth and at 60 represent the increasing proportion of the average each year comparing with the average of the former year. Similar to the results of boxplots, the averages had continued increasing since 2001. However, the extent of the rising pattern for average life expectancy at 60 is relatively insignificant to that at birth.
+Table \@ref(tab:3avg_yeari) lists the average life expectancy at birth and at 60, taking into account of all countries where their life expectancy informations are available. Yearly increments at birth and at 60 represent the increasing proportion of the average each year comparing with the average of the former year. Similar to the results of boxplots, the averages had continued increasing since 2001. However, the extent of the rising pattern for average life expectancy at 60 is relatively insignificant to that at birth.
 ```{r 3avg_yeari}
 avg_yeari <- le_birth_bs %>%
   left_join(le_60_bs, by = "Year") %>%
@@ -168,7 +168,8 @@ avg_yeari <- le_birth_bs %>%
          `lag average LE at 60` = lag(`average LE at 60`),
          `Yearly increment at 60` = `average LE at 60` - `lag average LE at 60`) %>%
   select(Year, `average LE at birth`, `average LE at 60`, 
-         `Yearly increment at birth`, `Yearly increment at 60`)
+         `Yearly increment at birth`, `Yearly increment at 60`) %>%
+  kable(caption = "Average life expectancy at birth, at age 60 (years) and their yearly increment")
 avg_yeari
 ```
 
@@ -203,11 +204,12 @@ meet_count_60 <- meet_average_60 %>%
   rename(number_countries_60 = n) %>%
   rename(meet_avg_60 = `meet average`)
 ```
-TABLE contains the number of countries which had and had not met the average life expectancy from 2000 to 2016.
+Table \@ref(tab:3count_birth_60) contains the number of countries which had and had not met the average life expectancy from 2000 to 2016.
 ```{r 3count_birth_60}
 count_birth_60 <- cbind(meet_count_birth, meet_count_60) %>%
   select(-Year...4, -meet_avg_60) %>%
-  rename(Year = Year...1, meet_avg = meet_avg_birth)
+  rename(Year = Year...1, meet_avg = meet_avg_birth) %>%
+  kable(caption = "Number of countries met and unmet average life expectancy at birth, at age 60 (years) each year")
   
 count_birth_60
 ```
