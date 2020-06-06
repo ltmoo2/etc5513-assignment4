@@ -3,3 +3,9 @@
 
 # Ada Library Information
 *.ali
+.Rproj.user
+
+*.RData
+*.Rproj
+*.Rhistory
+
