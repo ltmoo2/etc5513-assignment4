@@ -63,6 +63,7 @@ spend <- read_csv(here::here("data", "health_expenditure.csv"), skip = 1)
 gdp <- read_csv(here::here("data", "gdp_data.csv"), skip = 3)
 
 head(expectancy,10)
+
 head(spend, 10)
 head(gdp, 10)
 ```
@@ -91,3 +92,61 @@ Is there any relation between life span and GDP? Very hard to say, it is basical
 Therefore, I will only create the graph, inspired by [this link](https://vimeo.com/113449763)
 What is in the video:
 geom_point x = lifespan, y = Income, color = continent, size = population) 
+
+```{r}
+
+T_expectancy_tidy <- expectancy %>%
+      rename(life_exp = "Life expectancy at birth (years)_Both sexes",
+             country = X1_Country,
+             year = X2_Year) %>%
+      select(country, year, life_exp) %>%
+      filter(year == "2016")
+
+T_gdp_tidy <- gdp %>%
+      select(`Country Name`, "2016")%>%
+      na.omit()
+T_gdp_and_span <- left_join(T_expectancy_tidy, T_gdp_tidy, by = c("country" = "Country Name"))
+
+T_population <- read_csv(here::here("data/Population_data.csv"))
+  
+T_continent <-read_csv("https://raw.githubusercontent.com/dbouquin/IS_608/master/NanosatDB_munging/Countries-Continents.csv")
+
+T_tidy <- left_join(T_gdp_and_span, T_continent, by = c("country" = "Country"))
+
+```
+
+
+```{r}
+T_population <- read_csv(here::here("data/Population_data.csv"), skip = 3) %>%
+    select(`Country Name`, "2016") %>%
+    rename(population = "2016")
+T_continent <-read_csv("https://raw.githubusercontent.com/dbouquin/IS_608/master/NanosatDB_munging/Countries-Continents.csv")
+
+T_expectancy_tidy1 <- expectancy %>%
+    rename(life_exp = "Life expectancy at birth (years)_Both sexes",
+    country = X1_Country,
+    year = X2_Year) %>%
+    filter(year == "2016") %>%
+    select(country, life_exp)
+
+T_expectancy_tidy2 <- T_expectancy_tidy1 %>% 
+  mutate(country = str_replace_all(country,
+                        c("Bolivia" = "Bolivia (Plurinational State of)",
+                   "United Kingdom" = "United Kingdom of Great Britain and Northern Ireland",
+                          "Moldova" = "Republic of Moldova",
+                          "Tanzania" = "United Republic of Tanzania",
+                          "Vietnam" = "Viet Nam"))
+)
+T_gdp_tidy <- gdp %>%
+    select(`Country Name`, "2016") %>%
+    rename(GDP = "2016")
+T_tidy <-  left_join(T_gdp_tidy, T_population) %>%
+    left_join(T_continent, by = c("Country Name" = "Country")) %>%
+    na.omit()
+T_tidy2 <- left_join(T_tidy, T_expectancy_tidy2, by = c("Country Name" = "country"))
+T_plot <- T_tidy2 %>% mutate(PPP = (GDP*1000000/population),
+    life_exp = as.numeric(life_exp))
+    ggplot (T_plot, aes(x = GDP, y = life_exp, color = Continent, size = population)) +
+    geom_point()
+
+```
