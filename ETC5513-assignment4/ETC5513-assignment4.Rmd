@@ -90,7 +90,7 @@ expectancy_clean <- expectancy %>%
 
 
 \section*{Introduction}
-
+Health and economic are considered as important indicators for a country's development. @pardi2016determining states that many countries have adjusted their national objectives toward refining what can be done with the evolvement of national economic. This is closely linked to the establishment of Sustainable Development which embodies the vision of "meeting the needs of the present without compromising the ability of future generations to meet their own needs" (@venkataraman2009education). Although health and economic seem to be two unrelated fields of studies, both of them are inseparable that they exist in a two-way relationship when it comes to achieving the concept sustainable development. The ideal behind sustainability embraces the nature of longevity as one of the parameters, mentioned by @patten1997logical. Therefore, life expectancy will be represented as longevity in this report to investigate in both health and economic perspectives. For health aspects, the two research questions are based on the difference in life expectancy between genders and the progression on life expectancy at birth and at the age of 60. For economic aspects, health expenditure and GDP are chosen to reflect the questions - whether the greater the health expenditure or GDP,  the longer the lives.
 
 ## Data
 ## Research questions
@@ -581,12 +581,6 @@ box <- expectancy_clean %>%
   filter(Year %in% c(2000, 2004, 2008, 2012, 2016),
          Gender == "Both",
          Type %in% c("Life expectancy at birth (years)", "Life expectancy at age 60 (years)")) %>%
-  # Hi Joyce, you should consider using the following code for prettier color.
-  #mutate(Year = as.factor(Year)) %>%
-  # Your plot has hard-to-read X axis, therefore I recommed you to do this:
-  # 1. Shorten the name: Instead of "Life expectancy at birth (years)", how about Lifespan at birth?
-  # 2. Use this code to straighten the line: theme(axis.text.x = element_text(angle=30, hjust=1, vjust=1))
-  # Cheers, Thomas. 
 
   ggplot(aes(y = Expectancy,
              x = Type,
@@ -694,10 +688,10 @@ meet_count_60 <- meet_average_60 %>%
 ```
 Table \@ref(tab:3count_birth_60) contains the number of countries which had and had not met the average life expectancy from 2000 to 2016.
 ```{r, message=FALSE}
-count_birth_60 <- cbind(meet_count_birth, meet_count_60) %>%
-  select(-Year...4, -meet_avg_60) %>%
-  rename(Year = Year...1, meet_avg = meet_avg_birth) 
-  
+count_birth_60 <- left_join(meet_count_birth, meet_count_60,
+                            by = c("Year" = "Year",
+                                   "meet_avg_birth" = "meet_avg_60")) %>%
+  rename(meet_avg = meet_avg_birth)
 ```
 
 ```{r 3count_birth_60}
