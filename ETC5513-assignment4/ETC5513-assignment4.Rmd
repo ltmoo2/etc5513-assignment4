@@ -49,6 +49,7 @@ library(tidyverse)
 library(ggplot2)
 library(kableExtra)
 library(here)
+<<<<<<< HEAD
 library(ggthemes)
 library(countrycode)
 library(gganimate)
@@ -56,6 +57,9 @@ library(broom)
 library(knitr)
 library(maps)
 library(plotly)
+=======
+library(gganimate)
+>>>>>>> thomas
 ```
 
 
@@ -599,6 +603,7 @@ expectancy_clean %>%
 ```
 
 
+<<<<<<< HEAD
 ```{r, message=FALSE}
 le_birth_bs <- expectancy_clean %>%
   na.omit(expectancy_clean) %>%
@@ -728,6 +733,9 @@ combine_count <- grid.arrange(count_met_graph, count_unmet_graph)
 
 \section*{Life expectancy and Gross Domestic Product}
 For this section, our research team needed to include data for countries's population. The population data was then combined with GDP and life expectancy data. 
+=======
+\section*{Life expectancy and Gross Domestic Product}
+>>>>>>> thomas
 
 ```{r}
 T_population <- read_csv(here::here("data/Population_data.csv"), skip = 3) %>%
@@ -770,6 +778,7 @@ T_plot <- ggplot(T_plot_dat,
 ggplotly(T_plot) %>%
   layout(legend = list(orientation = 'b'))
 ```
+<<<<<<< HEAD
 
 Figure \@ref(fig:fig1T) shows income and lifespan in the world in 2016. Each point is a country. Color shows region while size shows population. X axis shows GDP per capita and Y axis shows lifespan in years. The countries with lower income tend to have lower life expectancy. No high income countries have short life expectancy, and no low income countries have long life expectancy. Most people live in mid income countries. Figure \@ref(fig:fig2T) shows the life expectancy of countries with GDP per capita less then 20000USD. There are huge different in lifespan on the same income level, depending on the country's health expenditure.
 
@@ -796,3 +805,18 @@ Thirdly, it was found that both the average life expectancy measured at birth an
 
 Finally, similar to health expenditure, a positive relationship was found between a country’s GDP per capita and its life expectancy with countries with a lower GDP having a lower expected lifespan. Furthermore no countries with a high GDP have a short life expectancy and no low GDP countries have a long life expectancy, perhaps indicating that this variable is an important indicator of an individuals expected lifespan. 
 
+=======
+
+Figure \@ref(fig:fig1T) shows income and lifespan in the world in 2016. Each point is a country. Color shows region while size shows population. X axis shows GDP per capita and Y axis shows lifespan in years. The countries with lower income tend to have lower life expectancy. No high income countries have short life expectancy, and no low income countries have long life expectancy. Most people live in mid income countries. Figure \@ref(fig:fig2T) shows the life expectancy of countries with GDP per capita less then 20000USD. There are huge different in lifespan on the same income level, depending on the country's health expenditure.
+
+```{r fig2T}
+T_plot2 <- T_plot_dat %>% filter(!GDP > 20000) %>%
+  ggplot( aes(x = GDP, y = life_exp, size = population)) +
+    geom_point(aes(group = `Country Name`,color = Continent)) +
+  scale_color_brewer(palette= "Dark2")+
+  scale_x_continuous(breaks = seq(0, 25000, by = 2500))+
+  theme(legend.position = "bottom") 
+ggplotly(T_plot2) %>%
+layout(showlegend = FALSE)
+```
+>>>>>>> thomas
