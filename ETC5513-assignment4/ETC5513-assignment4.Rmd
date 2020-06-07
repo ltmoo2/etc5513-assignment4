@@ -87,86 +87,58 @@ head(gdp, 10)
 
 
 \section*{Life expectancy and Gross Domestic Product}
-Life expectancy and GDP in USA
-- What to do?
-Is there any relation between life span and GDP? Very hard to say, it is basically chicken and egg. Students with better health will study faster as they can stay at school more. Likewise, healthier person save more and thus contribute more to the economy. (They can work harder, longer and focus more on the task) [6] (https://en.wikipedia.org/wiki/Preston_curve)
-Therefore, I will only create the graph, inspired by [this link](https://vimeo.com/113449763)
-What is in the video:
-geom_point x = lifespan, y = Income, color = continent, size = population) 
-
-```{r}
-
-T_expectancy_tidy <- expectancy %>%
-      rename(life_exp = "Life expectancy at birth (years)_Both sexes",
-             country = X1_Country,
-             year = X2_Year) %>%
-      select(country, year, life_exp) %>%
-      filter(year == "2016")
-
-T_gdp_tidy <- gdp %>%
-      select(`Country Name`, "2016")%>%
-      na.omit()
-T_gdp_and_span <- left_join(T_expectancy_tidy, T_gdp_tidy, by = c("country" = "Country Name"))
-
-T_population <- read_csv(here::here("data/Population_data.csv"))
-  
-T_continent <-read_csv("https://raw.githubusercontent.com/dbouquin/IS_608/master/NanosatDB_munging/Countries-Continents.csv")
-
-T_tidy <- left_join(T_gdp_and_span, T_continent, by = c("country" = "Country"))
-
-```
-
 
 ```{r}
 T_population <- read_csv(here::here("data/Population_data.csv"), skip = 3) %>%
     select(`Country Name`, "2016") %>%
     rename(population = "2016")
-T_continent <-read_csv("https://raw.githubusercontent.com/dbouquin/IS_608/master/NanosatDB_munging/Countries-Continents.csv")
+T_continent <-read_csv("https://raw.githubusercontent.com/dbouquin/IS_608/master/NanosatDB_munging/Countries-Continents.csv") #Name for continent, nothing too important
 
 T_expectancy_tidy1 <- expectancy %>%
     rename(life_exp = "Life expectancy at birth (years)_Both sexes",
     country = X1_Country,
     year = X2_Year) %>%
     filter(year == "2016") %>%
-    select(country, life_exp)
+    select(country, life_exp) %>% 
+    mutate(country = recode(country,
+                  "Bolivia (Plurinational State of)" =  "Bolivia",
+                  "United Kingdom of Great Britain and Northern Ireland" = "United Kingdom" ,
+                  "Republic of Moldova" = "Moldova",
+                  "United Republic of Tanzania" =  "Tanzania" ,
+                   "Viet Nam" = "Vietnam" )) #Rename observations that have different names in different data sets.
 
-T_expectancy_tidy2 <- T_expectancy_tidy1 %>% 
-  mutate(country = str_replace_all(country,
-                        c("Bolivia" = "Bolivia (Plurinational State of)",
-                   "United Kingdom" = "United Kingdom of Great Britain and Northern Ireland",
-                          "Moldova" = "Republic of Moldova",
-                          "Tanzania" = "United Republic of Tanzania",
-                          "Vietnam" = "Viet Nam"))
-)
 T_gdp_tidy <- gdp %>%
     select(`Country Name`, "2016") %>%
     rename(GDP = "2016")
 T_tidy <-  left_join(T_gdp_tidy, T_population) %>%
     left_join(T_continent, by = c("Country Name" = "Country")) %>%
     na.omit()
-T_tidy2 <- left_join(T_tidy, T_expectancy_tidy2, by = c("Country Name" = "country"))
-T_plot <- T_tidy2 %>% mutate(life_exp = as.numeric(life_exp))
-    ggplot (T_plot, aes(x = GDP, y = life_exp, color = Continent, size = population)) +
-    geom_point()
-
+T_tidy2 <- left_join(T_tidy, T_expectancy_tidy1, by = c("Country Name" = "country"))
+T_plot_dat <- T_tidy2 %>% mutate(PPP = (GDP/population),
+    life_exp = as.numeric(life_exp)) %>%
+    na.omit()
 ```
 
-```{r}
-plot1 <- ggplot(T_plot, 
-            aes(x = GDP, y=life_exp, 
-                size = population,
-                colour = Continent)) +
-  geom_point(alpha = 0.6, 
-             na.rm = TRUE) +
-  scale_color_brewer(palette = "Set2")+
-  scale_size(range = c(1, 4)) + 
-  transition_time(Year)
-  #scale_x_continuous(limits = c(0,10000), breaks = 1000)+
-  labs(title = 'Year: {frame_time}', 
-       x = "Health expenditure per capita(US$)", 
-       y = "Life expectancy at birth(years)") +
-  ease_aes()+
-  theme_bw()
+``` {r fig1T}
+T_plot <- ggplot(T_plot_dat, 
+                 aes(x = GDP, y = life_exp)) +
+    geom_point(aes(group = `Country Name`,color = Continent, size = population)) +
+  scale_color_brewer(palette= "Dark2")+
+  ggtitle("Life Expectancy and Income World wide in 2016 ")
 
-plot1
+ggplotly(T_plot) %>%
+  layout(legend = list(orientation = 'b'))
+```
+
+Figure \@ref(fig:fig1T) shows income and lifespan in the world in 2016. Each point is a country. Color shows region while size shows population. X axis shows GDP per capita and Y axis shows lifespan in years. The countries with lower income tend to have lower life expectancy. No high income countries have short life expectancy, and no low income countries have long life expectancy. Most people live in mid income countries. Figure \@ref(fig:fig2T) shows the life expectancy of countries with GDP per capita less then 20000USD. There are huge different in lifespan on the same income level, depending on the country's health expenditure.
+
+```{r fig2T}
+T_plot2 <- T_plot_dat %>% filter(!GDP > 20000) %>%
+  ggplot( aes(x = GDP, y = life_exp, size = population)) +
+    geom_point(aes(group = `Country Name`,color = Continent)) +
+  scale_color_brewer(palette= "Dark2")+
+  scale_x_continuous(breaks = seq(0, 25000, by = 2500))+
+  theme(legend.position = "bottom") 
+ggplotly(T_plot2) %>%
+layout(showlegend = FALSE)
 ```
