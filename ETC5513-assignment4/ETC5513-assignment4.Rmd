@@ -789,3 +789,16 @@ T_plot2 <- T_plot_dat %>% filter(!GDP > 20000) %>%
 ggplotly(T_plot2) %>%
 layout(showlegend = FALSE)
 ```
+
+
+\section*{Conclusion}
+The aim for this report was to respond to the four research questions outlined in the introduction. Based on the above analysis, the following conclusions can be drawn.  
+
+Firstly, the oft-reported gap in life expectancy for men and women is supported by the WHO data. Across the 16 years of recorded data, women were expected to outlive men by, on average, 4.7 years, possessing an average life expectancy of 71.6 years compared to 66.9 years for men. Furthermore, the gender variable appears to explain over 64% of this difference in the linear model produced.  
+
+Secondly, a dynamic relationship was found between life expectancy and health expenditure. The average life expectancy increased alongside the average health expenditure for almost all countries included in the WHO data although external forces can impact this trend. While generally, increased health expenditure was associated with increased life expectancy, the relationship was not perfectly linear. However, health expenditure was found to more accurately predict life expenditure at age 60, rather than at birth, possibly due to an increased need for medical care as one ages.  
+
+Thirdly, it was found that both the average life expectancy measured at birth and measured again at age 60 were increasing across the time period captured by the dataset. However, the rate of increase for measurements taken at birth was significantly higher than those taken at age 60. Furthermore, as time progressed an increased number of countries had met or exceeded both the average life expectancy at birth and at age 60, albeit at a slower rate for the measurements taken at age 60.  
+
+Finally, similar to health expenditure, a positive relationship was found between a country’s GDP per capita and its life expectancy with countries with a lower GDP having a lower expected lifespan. Furthermore no countries with a high GDP have a short life expectancy and no low GDP countries have a long life expectancy, perhaps indicating that this variable is an important indicator of an individuals expected lifespan. 
+
