@@ -50,6 +50,7 @@ library(tidyverse)
 library(ggplot2)
 library(kableExtra)
 library(here)
+library(gganimate)
 ```
 
 
@@ -144,9 +145,28 @@ T_tidy <-  left_join(T_gdp_tidy, T_population) %>%
     left_join(T_continent, by = c("Country Name" = "Country")) %>%
     na.omit()
 T_tidy2 <- left_join(T_tidy, T_expectancy_tidy2, by = c("Country Name" = "country"))
-T_plot <- T_tidy2 %>% mutate(PPP = (GDP*1000000/population),
-    life_exp = as.numeric(life_exp))
+T_plot <- T_tidy2 %>% mutate(life_exp = as.numeric(life_exp))
     ggplot (T_plot, aes(x = GDP, y = life_exp, color = Continent, size = population)) +
     geom_point()
 
+```
+
+```{r}
+plot1 <- ggplot(T_plot, 
+            aes(x = GDP, y=life_exp, 
+                size = population,
+                colour = Continent)) +
+  geom_point(alpha = 0.6, 
+             na.rm = TRUE) +
+  scale_color_brewer(palette = "Set2")+
+  scale_size(range = c(1, 4)) + 
+  transition_time(Year)
+  #scale_x_continuous(limits = c(0,10000), breaks = 1000)+
+  labs(title = 'Year: {frame_time}', 
+       x = "Health expenditure per capita(US$)", 
+       y = "Life expectancy at birth(years)") +
+  ease_aes()+
+  theme_bw()
+
+plot1
 ```
