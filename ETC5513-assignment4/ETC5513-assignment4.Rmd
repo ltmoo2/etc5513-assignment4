@@ -16,15 +16,15 @@ keep_md: true
 ---
 
 
-```{r installpackages, include=FALSE}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, messages=FALSE, warning=FALSE, fig.pos = 'H')
 #install.packages("devtools")
 # gganimate need to install from github
 #install_github("thomasp85/gganimate")
 ```
 
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, messages=FALSE, warning=FALSE, fig.pos = 'H')
+```{r libraries, include=FALSE}
 library(tidyverse)
 library(ggplot2)
 library(kableExtra)
@@ -39,6 +39,7 @@ library(knitr)
 library(maps)
 library(plotly)
 library(bookdown)
+library(gridExtra)
 ```
 
 
@@ -221,6 +222,267 @@ reg_comp %>%
 ```
 
 This shows that the gender model is superior to the year mode, explaining over 64% of the variation in the life expectancy value compared to under 33% for the year variable. Interestingly, almost the entire variation in life expectancy can be explained by including both variables.
+
+
+## Life expectancy at birth vs at age 60 years
+Life expectancy is a measure of population longevity which indicates how long a person is expected to live [@tosato2007aging]. It can be measured with different levels, @rabbi2013imbalance raises the point that life expectancy at birth would be higher than at any particular age. In this section, life expectancy at birth and at the age of 60 are examined to depict the changes within these indicators across the world from 2000 to 2016. 
+
+Figure \@ref(fig:3box) presents the overall distribution for life expectancy at birth (years) and life expectancy at age 60 (years) from 2000 to 2016. On the x-axis, Types consist of life expectancy at birth (years), which is positioned as the left boxplot in each sub-graph, and life expectancy at age 60 (years), being the one on the right. The y-axis provides the scale of life expectancy, measured in years. From 2000 to 2016, there is a slight upward-lifting trend for both types of boxplots, implying that people at birth and at the age of 60 are expected to live longer with the progress in time.
+
+```{r 3box, fig.cap="Life expectancy at birth (years) and at age 60 (years) boxplot in 2000, 2004,2008, 2012, 2016"}
+box <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Year %in% c(2000, 2004, 2008, 2012, 2016),
+         Gender == "Both",
+         Type %in% c("Life expectancy at birth (years)", "Life expectancy at age 60 (years)")) %>%
+
+  ggplot(aes(y = Expectancy,
+             x = Type,
+             color = Year)) +
+  geom_boxplot() +
+  theme(legend.position = "bottom", 
+        axis.text.x = element_text(angle=30, hjust=1, vjust=1)) +
+  facet_wrap(~ Year, nrow = 1)
+box
+```
+
+
+```{r distinct,include=FALSE}
+expectancy_clean %>%
+  distinct(Country)
+```
+
+
+```{r birth_bs, message=FALSE}
+le_birth_bs <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Type == "Life expectancy at birth (years)",
+         Gender == "Both") %>%
+  group_by(Year) %>%
+  summarise(`average LE at birth`= mean(Expectancy)) 
+```
+
+```{r meet_avg}
+meet_average_birth <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Type == "Life expectancy at birth (years)",
+         Gender == "Both") %>%
+  group_by(Year) %>%
+  mutate(`meet average` = if_else(
+    condition = Expectancy > (le_birth_bs$`average LE at birth`),
+    true = "met",
+    false = "unmet"
+  )) %>%
+  select(Country, Year, Expectancy, `meet average`) 
+
+```
+
+```{r count_birth}
+meet_count_birth <- meet_average_birth %>%
+  count(`meet average`) %>%
+  rename(number_countries_birth = n) %>%
+  rename(meet_avg_birth = `meet average`)
+```
+
+
+```{r 60_bs, message=FALSE}
+le_60_bs <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Type == "Life expectancy at age 60 (years)",
+         Gender == "Both") %>%
+  group_by(Year) %>%
+  summarise(`average LE at 60` = mean(Expectancy))
+```
+Table \@ref(tab:3avgyeari) lists the average life expectancy at birth and at 60, taking into account of all countries where their life expectancy informations are available. Yearly increments at birth and at 60 represent the increasing proportion of the average each year comparing with the average of the former year. Similar to the results of boxplots, the averages had continued increasing since 2001. However, the extent of the rising pattern for average life expectancy at 60 is relatively insignificant to that at birth.
+```{r avg_y}
+avg_yeari <- le_birth_bs %>%
+  left_join(le_60_bs, by = "Year") %>%
+  mutate(`lag average LE at birth` = lag(`average LE at birth`),
+         `Yearly increment at birth` = `average LE at birth` - `lag average LE at birth`,
+         `lag average LE at 60` = lag(`average LE at 60`),
+         `Yearly increment at 60` = `average LE at 60` - `lag average LE at 60`) %>%
+  select(Year, `average LE at birth`, `average LE at 60`, 
+         `Yearly increment at birth`, `Yearly increment at 60`) 
+```
+
+```{r 3avgyeari}
+avg_yeari %>%
+  head(10) %>% 
+  kable(caption = "Average life expectancy at birth, at age 60 (years) and their yearly increment") %>% 
+  kable_styling(bootstrap_options = 
+                  c("striped", "condensed"), 
+                  full_width = F, 
+                  position = "center")  
+  
+  
+```
+Figure \@ref(fig:3avgyearigr) exhibits the yearly improvements in average life expectancy both at birth and at 60 from 2000 to 2016. The increment for life expectancy at 60 was lower than that at birth for all times from 2000 to 2016. Nevertheless, the patterns for both of them are similar. For example, their increments in 2016 nearly drop to zero. On the next year, they both increase to the maximum increment from 2000 to 2016, as shown as the peaks. 
+```{r 3avgyearigr, fig.cap="Yearly increment of average life expectancy at birth and at age 60 (years)"}
+avg_yeari_gr <- avg_yeari %>%
+  pivot_longer(., cols = c(`Yearly increment at birth`, `Yearly increment at 60`),
+               names_to = "LE_Type", values_to = "Increment") %>%
+  ggplot(aes(x = Year, y = Increment, color = LE_Type)) +
+  geom_point() +
+  geom_line() 
+avg_yeari_gr
+```
+
+```{r avg_60}
+meet_average_60 <- expectancy_clean %>%
+  na.omit(expectancy_clean) %>%
+  filter(Type == "Life expectancy at age 60 (years)",
+         Gender == "Both") %>%
+  group_by(Year) %>%
+  mutate(`meet average` = if_else(
+    condition = Expectancy > (le_60_bs$`average LE at 60`),
+    true = "met",
+    false = "unmet"
+  )) %>%
+  select(Country, Year, Expectancy, `meet average`) 
+```
+
+```{r count_60}
+meet_count_60 <- meet_average_60 %>%
+  count(`meet average`) %>%
+  rename(number_countries_60 = n) %>%
+  rename(meet_avg_60 = `meet average`)
+```
+Table \@ref(tab:3countbirth60) contains the number of countries which had and had not met the average life expectancy from 2000 to 2016.
+```{r count_birth_60, message=FALSE}
+count_birth_60 <- left_join(meet_count_birth, meet_count_60,
+                            by = c("Year" = "Year",
+                                   "meet_avg_birth" = "meet_avg_60")) %>%
+  rename(meet_avg = meet_avg_birth)
+```
+
+```{r 3countbirth60}
+count_birth_60 %>%
+  head(10) %>% 
+kable(caption = "Number of countries met and unmet average life expectancy at birth, at age 60 (years) each year") %>% 
+  kable_styling(bootstrap_options = 
+                  c("striped", "condensed"), 
+                  full_width = F, 
+                  position = "center") 
+
+```
+
+```{r met_graph}
+count_met_graph <- count_birth_60 %>%
+  filter(meet_avg == "met") %>%
+  pivot_longer(., cols = c(number_countries_birth, number_countries_60),
+               names_to = "LE_count_type", values_to = "number_met_countries") %>%
+  ggplot(aes(x = Year, y = number_met_countries, color = LE_count_type)) +
+  geom_point() +
+  geom_line() 
+```
+
+```{r unmet_graph}
+count_unmet_graph <- count_birth_60 %>%
+  filter(meet_avg == "unmet") %>%
+  pivot_longer(., cols = c(number_countries_birth, number_countries_60),
+               names_to = "LE_count_type", values_to = "number_unmet_countries") %>%
+  ggplot(aes(x = Year, y = number_unmet_countries, color = LE_count_type)) +
+  geom_point() +
+  geom_line() 
+```
+
+Figure \@ref(fig:3combinecount) combines the number of countries that had met the average life expectancy at birth, at 60 and number of countries that had not met the averages from 2000 to 2016. As years pass on, more countries had been meeting and exceeding the average life expectancy at birth and at 60 each year. However, a pheonomenon is revealed here - although the number of countries meeting average life expectancy at 60 is lower than that at birth, the number of countries which did not meet the average is much higher. Furthermore, since 2001, the number of countries meeting average life expectancy at birth had already surpassed that of not meeting. Yet, for life expectancy at 60, it was not until 2013 that the number of countries meeting the average life expectancy at 60 began to exceed that of unmet number of countries.
+```{r 3combinecount, fig.cap="Trend of number of countries meeting and not meeting each year average LE at birth and 60", warning=FALSE, message=FALSE}
+combine_count <- grid.arrange(count_met_graph, count_unmet_graph)
+```
+
+
+
+## Life expectancy and Gross Domestic Product {#GDP}
+
+```{r t_tidy, warning= FALSE, message=FALSE}
+T_population <- read_csv(here::here("data/Population_data.csv"), skip = 3) %>%
+    select(`Country Name`, "2016") %>%
+    rename(population = "2016")
+T_continent <-read_csv("https://raw.githubusercontent.com/dbouquin/IS_608/master/NanosatDB_munging/Countries-Continents.csv") %>% mutate(Country = recode(Country, "US" = "United States"))
+
+T_expectancy_tidy1 <- expectancy %>%
+    rename(life_exp = "Life expectancy at birth (years)_Both sexes",
+    country = X1_Country,
+    year = X2_Year) %>%
+    filter(year == "2016") %>%
+    select(country, life_exp) %>% 
+    mutate(country = recode(country,
+                  "Bolivia (Plurinational State of)" =  "Bolivia",
+                  "United Kingdom of Great Britain and Northern Ireland" = "United Kingdom" ,
+                  "Republic of Moldova" = "Moldova",
+                  "United Republic of Tanzania" =  "Tanzania" ,
+                  "Viet Nam" = "Vietnam",
+                  "United States of America" = "United States")) #Rename observations that have different names in different data sets.
+
+T_gdp_tidy <- gdp %>%
+    select(`Country Name`, "2016") %>%
+    rename(GDP = "2016")
+
+#Join GDP with population
+T_tidy <-  left_join(T_gdp_tidy, T_population) %>%
+    left_join(T_continent, by = c("Country Name" = "Country")) %>%
+    na.omit()
+
+#Join Income and pop with life_exp
+T_tidy2 <- left_join(T_tidy, T_expectancy_tidy1, by = c("Country Name" = "country")) %>% 
+   mutate(life_exp = as.numeric(life_exp))
+
+
+T_plot_dat <- T_tidy2 %>% mutate(PPP = (GDP/population),
+    life_exp = as.numeric(life_exp)) %>%
+    na.omit()
+```
+
+```{r tab1T}
+#Calculate average for continents
+T_tidy2 %>% group_by(Continent) %>%
+  summarise("avg_life" = mean(life_exp, na.rm = TRUE),
+         "avg_income" = mean(GDP)) %>%
+  mutate( "Average Life Expectancy" = round(avg_life, digits = 2),
+          "Average GDP per capita" = round(avg_income, digits = 2)) %>%
+  select(Continent,`Average Life Expectancy`, `Average GDP per capita`) %>%
+  arrange(desc(`Average Life Expectancy`)) %>%
+  kable(caption = "Average life expectancy and GDP per capita by continents, 2016")  %>%      
+  kable_styling(bootstrap_options = c("striped", "bordered"))
+
+```
+
+Table \@ref(tab:tab1T) shows world's average life expectancy and GDP per capita by continents in 2016. People in Europpe had the highest income and lifespan. In contrast, Africa has lowest GDP per capita and life expectancy.
+
+``` {r fig1T, fig.cap ="Life Expectancy and Income World wide in 2016"}
+T_plot <- ggplot(T_plot_dat, 
+                 aes(x = GDP, y = life_exp)) +
+    geom_point(aes(group = `Country Name`,color = Continent, size = population)) +
+  scale_color_brewer(palette= "Set2")+
+  ggtitle("Life Expectancy and Income World wide in 2016 ")+
+  xlab("Life Expectancy")+
+  ylab("GDP per Capita")
+
+ggplotly(T_plot) %>% 
+  layout(legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5, y = -0.2))  # put legend in center of x-axis
+#From: https://stackoverflow.com/questions/39668369/plotly-in-r-listing-legend-items-horizontally-and-centered-below-a-plot
+```
+
+Figure \@ref(fig:fig1T) shows income and lifespan in the world in 2016. Each point is a country. Color shows region while size shows population. X axis shows GDP per capita and Y axis shows lifespan in years. The countries with lower income tend to have lower life expectancy. No high income countries have short life expectancy, and no low income countries have long life expectancy. Most people live in mid income countries. Figure \@ref(fig:fig2T) shows the life expectancy of countries with GDP per capita less then 20000 USD. There are huge different in lifespan on the same income level, depending on the country's health expenditure.
+
+```{r fig2T, fig.cap="Life expectancy in coutries with Income less than 20,000USD/person"}
+T_plot2 <- T_plot_dat %>% filter(!GDP > 20000) %>%
+  ggplot( aes(x = GDP, y = life_exp, size = population)) +
+    geom_point(aes(group = `Country Name`,color = Continent)) +
+  scale_color_brewer(palette= "Set2")+
+  scale_x_continuous(breaks = seq(0, 25000, by = 2500))+
+  xlab("Life Expectancy")+
+  ylab("GDP per Capita")+
+  theme(legend.position = "bottom") +
+  ggtitle("Life expectancy in coutries with Income less than 20,000USD/person")
+ggplotly(T_plot2) %>%
+layout(legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5, y = -0.2))  # put legend in center of x-axis
+```
 
 
 ## Life expectancy and Health expenditure
@@ -476,8 +738,6 @@ ggplot(hale_birth_aug,
 ```
 
 
-
-
 ```{r age60_model}
 # model: HALE at age60 and health expenditure
 lm_age60 <- lm (`Healthy life expectancy (HALE) at age 60 (years)` ~ `Health expenditure per capita(US$)`, life_health_lm_data)
@@ -547,278 +807,21 @@ From the above analysis, we can learn that the amount of health expenditure per 
 
 
 
-## Life expectancy at birth vs at age 60 years
-Life expectancy is a measure of population longevity which indicates how long a person is expected to live [@tosato2007aging]. It can be measured with different levels, @rabbi2013imbalance raises the point that life expectancy at birth would be higher than at any particular age. In this section, life expectancy at birth and at the age of 60 are examined to depict the changes within these indicators across the world from 2000 to 2016. 
-
-Figure \@ref(fig:3box) presents the overall distribution for life expectancy at birth (years) and life expectancy at age 60 (years) from 2000 to 2016. On the x-axis, Types consist of life expectancy at birth (years), which is positioned as the left boxplot in each sub-graph, and life expectancy at age 60 (years), being the one on the right. The y-axis provides the scale of life expectancy, measured in years. From 2000 to 2016, there is a slight upward-lifting trend for both types of boxplots, implying that people at birth and at the age of 60 are expected to live longer with the progress in time.
-
-```{r 3box, fig.cap="Life expectancy at birth (years) and at age 60 (years) boxplot in 2000, 2004,2008, 2012, 2016"}
-box <- expectancy_clean %>%
-  na.omit(expectancy_clean) %>%
-  filter(Year %in% c(2000, 2004, 2008, 2012, 2016),
-         Gender == "Both",
-         Type %in% c("Life expectancy at birth (years)", "Life expectancy at age 60 (years)")) %>%
-
-  ggplot(aes(y = Expectancy,
-             x = Type,
-             color = Year)) +
-  geom_boxplot() +
-  theme(legend.position = "bottom", 
-        axis.text.x = element_text(angle=30, hjust=1, vjust=1)) +
-  facet_wrap(~ Year, nrow = 1)
-box
-```
-
-
-```{r distinct,include=FALSE}
-expectancy_clean %>%
-  distinct(Country)
-```
-
-
-```{r birth_bs, message=FALSE}
-le_birth_bs <- expectancy_clean %>%
-  na.omit(expectancy_clean) %>%
-  filter(Type == "Life expectancy at birth (years)",
-         Gender == "Both") %>%
-  group_by(Year) %>%
-  summarise(`average LE at birth`= mean(Expectancy)) 
-```
-
-```{r meet_avg}
-meet_average_birth <- expectancy_clean %>%
-  na.omit(expectancy_clean) %>%
-  filter(Type == "Life expectancy at birth (years)",
-         Gender == "Both") %>%
-  group_by(Year) %>%
-  mutate(`meet average` = if_else(
-    condition = Expectancy > (le_birth_bs$`average LE at birth`),
-    true = "met",
-    false = "unmet"
-  )) %>%
-  select(Country, Year, Expectancy, `meet average`) 
-
-```
-
-```{r count_birth}
-meet_count_birth <- meet_average_birth %>%
-  count(`meet average`) %>%
-  rename(number_countries_birth = n) %>%
-  rename(meet_avg_birth = `meet average`)
-```
-
-
-```{r 60_bs, message=FALSE}
-le_60_bs <- expectancy_clean %>%
-  na.omit(expectancy_clean) %>%
-  filter(Type == "Life expectancy at age 60 (years)",
-         Gender == "Both") %>%
-  group_by(Year) %>%
-  summarise(`average LE at 60` = mean(Expectancy))
-```
-Table \@ref(tab:3avgyeari) lists the average life expectancy at birth and at 60, taking into account of all countries where their life expectancy informations are available. Yearly increments at birth and at 60 represent the increasing proportion of the average each year comparing with the average of the former year. Similar to the results of boxplots, the averages had continued increasing since 2001. However, the extent of the rising pattern for average life expectancy at 60 is relatively insignificant to that at birth.
-```{r avg_y}
-avg_yeari <- le_birth_bs %>%
-  left_join(le_60_bs, by = "Year") %>%
-  mutate(`lag average LE at birth` = lag(`average LE at birth`),
-         `Yearly increment at birth` = `average LE at birth` - `lag average LE at birth`,
-         `lag average LE at 60` = lag(`average LE at 60`),
-         `Yearly increment at 60` = `average LE at 60` - `lag average LE at 60`) %>%
-  select(Year, `average LE at birth`, `average LE at 60`, 
-         `Yearly increment at birth`, `Yearly increment at 60`) 
-```
-
-```{r 3avgyeari}
-avg_yeari %>%
-  kable(caption = "Average life expectancy at birth, at age 60 (years) and their yearly increment") %>% 
-  kable_styling(bootstrap_options = 
-                  c("striped", "condensed"), 
-                  full_width = F, 
-                  position = "center") 
-```
-Figure \@ref(fig:3avgyearigr) exhibits the yearly improvements in average life expectancy both at birth and at 60 from 2000 to 2016. The increment for life expectancy at 60 was lower than that at birth for all times from 2000 to 2016. Nevertheless, the patterns for both of them are similar. For example, their increments in 2016 nearly drop to zero. On the next year, they both increase to the maximum increment from 2000 to 2016, as shown as the peaks. 
-```{r 3avgyearigr, fig.cap="Yearly increment of average life expectancy at birth and at age 60 (years)"}
-avg_yeari_gr <- avg_yeari %>%
-  pivot_longer(., cols = c(`Yearly increment at birth`, `Yearly increment at 60`),
-               names_to = "LE_Type", values_to = "Increment") %>%
-  ggplot(aes(x = Year, y = Increment, color = LE_Type)) +
-  geom_point() +
-  geom_line() 
-avg_yeari_gr
-```
-
-```{r avg_60}
-meet_average_60 <- expectancy_clean %>%
-  na.omit(expectancy_clean) %>%
-  filter(Type == "Life expectancy at age 60 (years)",
-         Gender == "Both") %>%
-  group_by(Year) %>%
-  mutate(`meet average` = if_else(
-    condition = Expectancy > (le_60_bs$`average LE at 60`),
-    true = "met",
-    false = "unmet"
-  )) %>%
-  select(Country, Year, Expectancy, `meet average`) 
-```
-
-```{r count_60}
-meet_count_60 <- meet_average_60 %>%
-  count(`meet average`) %>%
-  rename(number_countries_60 = n) %>%
-  rename(meet_avg_60 = `meet average`)
-```
-Table \@ref(tab:3countbirth60) contains the number of countries which had and had not met the average life expectancy from 2000 to 2016.
-```{r count_birth_60, message=FALSE}
-count_birth_60 <- left_join(meet_count_birth, meet_count_60,
-                            by = c("Year" = "Year",
-                                   "meet_avg_birth" = "meet_avg_60")) %>%
-  rename(meet_avg = meet_avg_birth)
-```
-
-```{r 3countbirth60}
-count_birth_60 %>%
-kable(caption = "Number of countries met and unmet average life expectancy at birth, at age 60 (years) each year") %>% 
-  kable_styling(bootstrap_options = 
-                  c("striped", "condensed"), 
-                  full_width = F, 
-                  position = "center") 
-```
-
-```{r met_graph}
-count_met_graph <- count_birth_60 %>%
-  filter(meet_avg == "met") %>%
-  pivot_longer(., cols = c(number_countries_birth, number_countries_60),
-               names_to = "LE_count_type", values_to = "number_met_countries") %>%
-  ggplot(aes(x = Year, y = number_met_countries, color = LE_count_type)) +
-  geom_point() +
-  geom_line() 
-```
-
-```{r unmet_graph}
-count_unmet_graph <- count_birth_60 %>%
-  filter(meet_avg == "unmet") %>%
-  pivot_longer(., cols = c(number_countries_birth, number_countries_60),
-               names_to = "LE_count_type", values_to = "number_unmet_countries") %>%
-  ggplot(aes(x = Year, y = number_unmet_countries, color = LE_count_type)) +
-  geom_point() +
-  geom_line() 
-```
-
-Figure \@ref(fig:3combinecount) combines the number of countries that had met the average life expectancy at birth, at 60 and number of countries that had not met the averages from 2000 to 2016. As years pass on, more countries had been meeting and exceeding the average life expectancy at birth and at 60 each year. However, a pheonomenon is revealed here - although the number of countries meeting average life expectancy at 60 is lower than that at birth, the number of countries which did not meet the average is much higher. Furthermore, since 2001, the number of countries meeting average life expectancy at birth had already surpassed that of not meeting. Yet, for life expectancy at 60, it was not until 2013 that the number of countries meeting the average life expectancy at 60 began to exceed that of unmet number of countries.
-```{r 3combinecount, fig.cap="Trend of number of countries meeting and not meeting each year average LE at birth and 60", warning=FALSE, message=FALSE}
-library(gridExtra)
-combine_count <- grid.arrange(count_met_graph, count_unmet_graph)
-```
-
-
-
-## Life expectancy and Gross Domestic Product {#GDP}
-
-```{r t_tidy, warning= FALSE, message=FALSE}
-T_population <- read_csv(here::here("data/Population_data.csv"), skip = 3) %>%
-    select(`Country Name`, "2016") %>%
-    rename(population = "2016")
-T_continent <-read_csv("https://raw.githubusercontent.com/dbouquin/IS_608/master/NanosatDB_munging/Countries-Continents.csv") %>% mutate(Country = recode(Country, "US" = "United States"))
-
-T_expectancy_tidy1 <- expectancy %>%
-    rename(life_exp = "Life expectancy at birth (years)_Both sexes",
-    country = X1_Country,
-    year = X2_Year) %>%
-    filter(year == "2016") %>%
-    select(country, life_exp) %>% 
-    mutate(country = recode(country,
-                  "Bolivia (Plurinational State of)" =  "Bolivia",
-                  "United Kingdom of Great Britain and Northern Ireland" = "United Kingdom" ,
-                  "Republic of Moldova" = "Moldova",
-                  "United Republic of Tanzania" =  "Tanzania" ,
-                  "Viet Nam" = "Vietnam",
-                  "United States of America" = "United States")) #Rename observations that have different names in different data sets.
-
-T_gdp_tidy <- gdp %>%
-    select(`Country Name`, "2016") %>%
-    rename(GDP = "2016")
-
-#Join GDP with population
-T_tidy <-  left_join(T_gdp_tidy, T_population) %>%
-    left_join(T_continent, by = c("Country Name" = "Country")) %>%
-    na.omit()
-
-#Join Income and pop with life_exp
-T_tidy2 <- left_join(T_tidy, T_expectancy_tidy1, by = c("Country Name" = "country")) %>% 
-   mutate(life_exp = as.numeric(life_exp))
-
-
-T_plot_dat <- T_tidy2 %>% mutate(PPP = (GDP/population),
-    life_exp = as.numeric(life_exp)) %>%
-    na.omit()
-```
-
-```{r tab1T}
-#Calculate average for continents
-T_tidy2 %>% group_by(Continent) %>%
-  summarise("avg_life" = mean(life_exp, na.rm = TRUE),
-         "avg_income" = mean(GDP)) %>%
-  mutate( "Average Life Expectancy" = round(avg_life, digits = 2),
-          "Average GDP per capita" = round(avg_income, digits = 2)) %>%
-  select(Continent,`Average Life Expectancy`, `Average GDP per capita`) %>%
-  arrange(desc(`Average Life Expectancy`)) %>%
-  kable(caption = "Average life expectancy and GDP per capita by continents, 2016")  %>%      
-  kable_styling(bootstrap_options = c("striped", "bordered"))
-
-```
-
-Table \@ref(tab:tab1T) shows world's average life expectancy and GDP per capita by continents in 2016. People in Europpe had the highest income and lifespan. In contrast, Africa has lowest GDP per capita and life expectancy.
-
-``` {r fig1T, fig.cap ="Life Expectancy and Income World wide in 2016"}
-T_plot <- ggplot(T_plot_dat, 
-                 aes(x = GDP, y = life_exp)) +
-    geom_point(aes(group = `Country Name`,color = Continent, size = population)) +
-  scale_color_brewer(palette= "Set2")+
-  ggtitle("Life Expectancy and Income World wide in 2016 ")+
-  xlab("Life Expectancy")+
-  ylab("GDP per Capita")
-
-ggplotly(T_plot) %>% 
-  layout(legend = list(orientation = "h",   # show entries horizontally
-                     xanchor = "center",  # use center of legend as anchor
-                     x = 0.5, y = -0.2))  # put legend in center of x-axis
-#From: https://stackoverflow.com/questions/39668369/plotly-in-r-listing-legend-items-horizontally-and-centered-below-a-plot
-```
-
-Figure \@ref(fig:fig1T) shows income and lifespan in the world in 2016. Each point is a country. Color shows region while size shows population. X axis shows GDP per capita and Y axis shows lifespan in years. The countries with lower income tend to have lower life expectancy. No high income countries have short life expectancy, and no low income countries have long life expectancy. Most people live in mid income countries. Figure \@ref(fig:fig2T) shows the life expectancy of countries with GDP per capita less then 20000 USD. There are huge different in lifespan on the same income level, depending on the country's health expenditure.
-
-```{r fig2T, fig.cap="Life expectancy in coutries with Income less than 20,000USD/person"}
-T_plot2 <- T_plot_dat %>% filter(!GDP > 20000) %>%
-  ggplot( aes(x = GDP, y = life_exp, size = population)) +
-    geom_point(aes(group = `Country Name`,color = Continent)) +
-  scale_color_brewer(palette= "Set2")+
-  scale_x_continuous(breaks = seq(0, 25000, by = 2500))+
-  xlab("Life Expectancy")+
-  ylab("GDP per Capita")+
-  theme(legend.position = "bottom") +
-  ggtitle("Life expectancy in coutries with Income less than 20,000USD/person")
-ggplotly(T_plot2) %>%
-layout(legend = list(orientation = "h",   # show entries horizontally
-                     xanchor = "center",  # use center of legend as anchor
-                     x = 0.5, y = -0.2))  # put legend in center of x-axis
-```
-
-
 # Conclusion
 The aim for this report was to respond to the four research questions outlined in the introduction. Based on the above analysis, the following conclusions can be drawn.  
 
 Firstly, the oft-reported gap in life expectancy for men and women is supported by the WHO data. Across the 16 years of recorded data, women were expected to outlive men by, on average, 4.7 years, possessing an average life expectancy of 71.6 years compared to 66.9 years for men. Furthermore, the gender variable appears to explain over 64% of this difference in the linear model produced.  
 
-Secondly, a dynamic relationship was found between life expectancy and health expenditure. The average life expectancy increased alongside the average health expenditure for almost all countries included in the WHO data although external forces can impact this trend. While generally, increased health expenditure was associated with increased life expectancy, the relationship was not perfectly linear. However, health expenditure was found to more accurately predict life expenditure at age 60, rather than at birth, possibly due to an increased need for medical care as one ages.  
+Secondly, it was found that both the average life expectancy measured at birth and measured again at age 60 were increasing across the time period captured by the dataset. However, the rate of increase for measurements taken at birth was significantly higher than those taken at age 60. Furthermore, as time progressed an increased number of countries had met or exceeded both the average life expectancy at birth and at age 60, albeit at a slower rate for the measurements taken at age 60.  
 
-Thirdly, it was found that both the average life expectancy measured at birth and measured again at age 60 were increasing across the time period captured by the dataset. However, the rate of increase for measurements taken at birth was significantly higher than those taken at age 60. Furthermore, as time progressed an increased number of countries had met or exceeded both the average life expectancy at birth and at age 60, albeit at a slower rate for the measurements taken at age 60.  
+Thirdly, a positive relationship was found between a country’s GDP per capita and its life expectancy with countries with a lower GDP having a lower expected lifespan. Furthermore no countries with a high GDP have a short life expectancy and no low GDP countries have a long life expectancy, perhaps indicating that this variable is an important indicator of an individuals expected lifespan.  
 
-Finally, similar to health expenditure, a positive relationship was found between a country’s GDP per capita and its life expectancy with countries with a lower GDP having a lower expected lifespan. Furthermore no countries with a high GDP have a short life expectancy and no low GDP countries have a long life expectancy, perhaps indicating that this variable is an important indicator of an individuals expected lifespan.  
+Finally, similar to GDP, a dynamic relationship was found between life expectancy and health expenditure. The average life expectancy increased alongside the average health expenditure for almost all countries included in the WHO data although external forces can impact this trend. While generally, increased health expenditure was associated with increased life expectancy, the relationship was not perfectly linear. However, health expenditure was found to more accurately predict life expenditure at age 60, rather than at birth, possibly due to an increased need for medical care as one ages.  
 
 
 # Acknowlegment
 
-Our team would like to thank all the contributors to the following R package: @tidyverse, @kable, @ggplot2, @knitr, @here, @base, @ggthemes, @countrycode, @devtools, @transformr, @gganimate, @broom, @maps, @plotly, @bookdown.
+Our team would like to thank all the contributors to the following R package: @tidyverse, @kable, @ggplot2, @knitr, @here, @base, @ggthemes, @countrycode, @devtools, @transformr, @gganimate, @broom, @maps, @plotly, @bookdown,@grid.
 
 
 # References
