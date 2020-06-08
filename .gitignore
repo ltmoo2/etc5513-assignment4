@@ -4,12 +4,10 @@
 # Ada Library Information
 *.ali
 .Rproj.user
-<<<<<<< HEAD
-
-
 *.RData
 *.Rproj
 *.Rhistory
-
-=======
->>>>>>> thomas
+*.log
+*.tex
+ETC5513-assignment4_cache/
+ETC5513-assignment4_files/
