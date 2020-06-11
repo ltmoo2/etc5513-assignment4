@@ -83,7 +83,7 @@ expectancy_clean <- expectancy %>%
 # Introduction
 Health and economic are considered as important indicators for a country's development. @pardi2016determining states that many countries have adjusted their national objectives toward refining what can be done with the evolvement of national economic. This is closely linked to the establishment of Sustainable Development which embodies the vision of "Meeting the needs of the present without compromising the ability of future generations to meet their own needs" [@venkataraman2009education]. Although health and economic seem to be two unrelated fields of studies, they are inseparable as they exist in a two-way relationship when it comes to achieving the concept sustainable development. The ideal behind sustainability embraces the nature of longevity as one of the parameters, mentioned by @patten1997logical. Therefore, life expectancy will be represented as longevity in this report to investigate in both health and economic perspectives.   
   
-For health aspects, our team has two main research questions, based on the difference in life expectancy between genders and the progression on life expectancy at birth and at the age of 60. For economic aspects, our team analyze health expenditure and GPD per capita in order to answer these questions: Whether high GDP per capita and health expenditure lead to higher life expectancy? What is the relations between health expenditure and life expectancy?  
+For health aspects, our team has two main research questions, based on the difference in life expectancy between genders and the progression on life expectancy at birth and at the age of 60. For economic aspects, our team analyze health expenditure and GDP per capita in order to answer these questions: Whether high GDP per capita and health expenditure lead to higher life expectancy? What is the relations between health expenditure and life expectancy?  
 
 
 
@@ -486,8 +486,9 @@ T_tidy2 %>% group_by(Continent) %>%
 
 ```
 
-Table \@ref(tab:tab1T) shows world's average life expectancy and GDP per capita by continents in 2016. People in Europpe had the highest income and lifespan. In contrast, Africa has lowest GDP per capita and life expectancy.
-
+Table \@ref(tab:tab1T) shows world's average life expectancy and GDP per capita by continents in 2016. People in Europpe had the highest income and lifespan. In contrast, Africa has lowest GDP per capita and life expectancy. This finding goes in line with that of Preston: That individuals born in richer countries, on average, can expect to live longer than those born in poor countries, and the curve between income and life expectancy will flat out [@T-preston]. However, others researchs suggest that there is causality that goes from income to health [@T-antipreston]. Because of limited scope of this study, we decide not go into detail of this relationship.  
+  
+  
 ``` {r fig1T, fig.cap ="Life Expectancy and Income World wide in 2016"}
 T_plot <- ggplot(T_plot_dat, 
                  aes(x = GDP, y = life_exp)) +
@@ -504,7 +505,9 @@ ggplotly(T_plot) %>%
 #From: https://stackoverflow.com/questions/39668369/plotly-in-r-listing-legend-items-horizontally-and-centered-below-a-plot
 ```
 
-Figure \@ref(fig:fig1T) shows income and lifespan in the world in 2016. Each point is a country. Color shows region while size shows population. X axis shows GDP per capita and Y axis shows lifespan in years. The countries with lower income tend to have lower life expectancy. No high income countries have short life expectancy, and no low income countries have long life expectancy. Most people live in mid income countries. Figure \@ref(fig:fig2T) shows the life expectancy of countries with GDP per capita less then 20000 USD. There are huge different in lifespan on the same income level, depending on the country's health expenditure.
+Figure \@ref(fig:fig1T) shows income and lifespan in the world in 2016. Each point is a country. Color shows region while size shows population. X axis shows GDP per capita and Y axis shows lifespan in years. The countries with lower income tend to have lower life expectancy. No high income countries have short life expectancy, and no low income countries have long life expectancy. Most people live in mid income countries. Therefore, for a more detailed view on the majority of population worldwide, we create figure \@ref(fig:fig2T). Figure \@ref(fig:fig2T) shows the life expectancy of countries with GDP per capita less then 20000 USD. There are huge different in lifespan on the same income level. This difference may be explained by how the money is used, or in other words, the country's health expenditure.  
+  
+  
 
 ```{r fig2T, fig.cap="Life expectancy in coutries with Income less than 20,000USD/person"}
 T_plot2 <- T_plot_dat %>% filter(!GDP > 20000) %>%
